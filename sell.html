@@ -6,42 +6,46 @@
     <title>Submit Listing | Vault SMP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
         body { font-family: 'Outfit', sans-serif; background-color: #050505; color: white; overflow-x: hidden; }
         
+        /* Premium Glass Effect */
         .glass {
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            background: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 80px rgba(0,0,0,0.8);
         }
         
+        /* Input Styles */
         input, textarea {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #eee;
+            padding: 18px;
             border-radius: 12px;
             width: 100%;
             outline: none;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 0.9rem;
+            letter-spacing: 0.02em;
         }
         
         input:focus, textarea:focus {
-            border-color: #34d399;
-            background: rgba(52, 211, 153, 0.05);
-            box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.05);
+            border-color: #10b981; /* Emerald-500 */
+            background: rgba(16, 185, 129, 0.03);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+            transform: translateY(-2px);
         }
 
         label {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.2em;
             color: rgba(255, 255, 255, 0.4);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             display: block;
             font-weight: 700;
         }
@@ -51,72 +55,79 @@
             top: 0;
             left: 0;
             z-index: -1;
+            background: radial-gradient(circle at center, #111 0%, #000 100%); /* Vignette Effect */
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
     <canvas id="particle-canvas"></canvas>
 
-    <nav class="w-full px-8 py-6 flex justify-between items-center z-50">
+    <nav class="w-full px-8 py-6 flex justify-between items-center z-50 fixed top-0 left-0 bg-gradient-to-b from-black/80 to-transparent">
         <div class="flex items-center space-x-2">
             <div class="w-8 h-8 bg-white rounded-sm rotate-45 flex items-center justify-center">
                 <i data-lucide="box" class="text-black w-4 h-4 -rotate-45"></i>
             </div>
             <span class="text-xl font-bold tracking-tighter uppercase">Vault.smp</span>
         </div>
-        <a href="/" class="text-xs font-bold uppercase tracking-widest text-white/50 hover:text-white transition">Back to Showroom</a>
+        <a href="/" class="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white transition">
+            <span>Back to Showroom</span>
+            <i data-lucide="arrow-up-right" class="w-3 h-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"></i>
+        </a>
     </nav>
 
-    <div class="flex-grow flex items-center justify-center p-6 pb-20">
-        <div class="glass w-full max-w-2xl p-10 rounded-[2rem] relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+    <div class="flex-grow flex items-center justify-center p-6 pt-24 pb-20">
+        <div id="form-card" class="glass w-full max-w-2xl p-10 md:p-12 rounded-[2rem] relative overflow-hidden opacity-0 translate-y-20">
+            
+            <div class="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-            <div class="mb-10 text-center">
-                <h1 class="text-4xl font-bold tracking-tight mb-3">SUBMIT YOUR STASH</h1>
-                <p class="text-white/40 text-sm font-light max-w-md mx-auto">
-                    Listing request will be reviewed by Vault Admins for verification.
+            <div class="mb-12 text-center relative z-10">
+                <div class="inline-block px-3 py-1 border border-white/10 rounded-full text-[9px] uppercase tracking-[0.3em] text-emerald-400 mb-4 bg-black/40">Secure Protocol</div>
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-white">SUBMIT STASH</h1>
+                <p class="text-white/40 text-sm font-light max-w-md mx-auto leading-relaxed">
+                    Initiate a secure listing request. Vault Admins will verify coordinates before public listing.
                 </p>
             </div>
 
-            <form id="sellForm" class="space-y-6 relative z-10">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label>Seller Name (Discord/IGN)</label>
+            <form id="sellForm" class="space-y-8 relative z-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="group">
+                        <label>Identity (Discord/IGN)</label>
                         <input type="text" id="seller" placeholder="Who are you?" required>
                     </div>
-                    <div>
-                        <label>Expected Price</label>
+                    <div class="group">
+                        <label>Valuation</label>
                         <input type="text" id="price" placeholder="e.g. 1,500,000 $" required>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label>Stash Title</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="group">
+                        <label>Asset Title</label>
                         <input type="text" id="title" placeholder="e.g. Sky Vault Alpha" required>
                     </div>
-                    <div>
-                        <label>Region</label>
+                    <div class="group">
+                        <label>Coordinates / Region</label>
                         <input type="text" id="region" placeholder="e.g. End Highlands" required>
                     </div>
                 </div>
 
-                <div>
-                    <label>Security & Description</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                        <input type="text" id="security" placeholder="Security Level (e.g. Max Lvl 5)" required>
+                <div class="group">
+                    <label>Security & Intel</label>
+                    <div class="mb-4">
+                         <input type="text" id="security" placeholder="Security Level (e.g. Max Lvl 5 / Void Access)" required>
                     </div>
-                    <textarea id="description" rows="4" placeholder="Describe contents, defenses, and coordinates (Admins only see coords)..." required></textarea>
+                    <textarea id="description" rows="4" placeholder="Detailed manifest of contents, defensive layers, and specific coordinates..." required></textarea>
                 </div>
                 
-                <div>
-                    <label>Image Evidence Links (One per line)</label>
+                <div class="group">
+                    <label>Evidence (Images)</label>
                     <textarea id="images" rows="3" placeholder="https://imgur.com/example1&#10;https://imgur.com/example2" required class="font-mono text-xs tracking-wide text-emerald-400/80"></textarea>
+                    <div class="text-[9px] text-white/20 mt-2 uppercase tracking-widest text-right">One URL per line</div>
                 </div>
 
-                <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-5 rounded-xl transition duration-300 transform active:scale-[0.98] flex items-center justify-center gap-3 uppercase tracking-widest text-xs mt-4">
-                    <span>Submit for Review</span>
-                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                <button type="submit" class="w-full bg-white hover:bg-emerald-400 text-black font-bold py-5 rounded-xl transition duration-500 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-xs mt-6 group overflow-hidden relative">
+                    <span class="relative z-10">Submit for Verification</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform"></i>
                 </button>
             </form>
         </div>
@@ -125,7 +136,20 @@
     <script>
         lucide.createIcons();
 
-        // PARTICLE EFFECT (Mouse'dan kaçan noktalar)
+        // 1. ANİMASYON: FORMUN GİRİŞİ (Fade Up & Slide)
+        // Sayfa yüklendiğinde çalışır
+        window.addEventListener('load', () => {
+            gsap.to("#form-card", {
+                duration: 1.5,
+                opacity: 1,
+                y: 0,
+                ease: "power3.out", // Yumuşak bir frenleme efekti
+                delay: 0.2
+            });
+        });
+
+
+        // 2. GELİŞMİŞ PARTİKÜL SİSTEMİ (Yükselen & Kaçan)
         const canvas = document.getElementById('particle-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -137,58 +161,75 @@
         window.addEventListener('resize', resize);
         resize();
 
-        let mouse = { x: null, y: null };
+        let mouse = { x: undefined, y: undefined };
         window.addEventListener('mousemove', (e) => {
             mouse.x = e.x;
             mouse.y = e.y;
         });
+        
+        // Mouse ekran dışına çıkarsa etkiyi sıfırla
+        window.addEventListener('mouseout', () => {
+            mouse.x = undefined;
+            mouse.y = undefined;
+        });
 
         class Particle {
             constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2 + 1;
-                this.baseX = this.x;
-                this.baseY = this.y;
-                this.density = (Math.random() * 30) + 1;
+                this.init();
             }
+
+            init() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height + canvas.height; // Ekranın altından başlasın
+                this.size = Math.random() * 1.5 + 0.5; // Çok küçük ve zarif
+                this.speedY = Math.random() * 0.5 + 0.2; // Yavaşça yukarı süzülme hızı
+                this.opacity = Math.random() * 0.5 + 0.1;
+            }
+
             draw() {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; // Beyaz partiküller
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.closePath();
                 ctx.fill();
             }
-            update() {
-                let dx = mouse.x - this.x;
-                let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-                let forceDirectionX = dx / distance;
-                let forceDirectionY = dy / distance;
-                let maxDistance = 150; // Mouse etki alanı
-                let force = (maxDistance - distance) / maxDistance;
-                let directionX = forceDirectionX * force * this.density;
-                let directionY = forceDirectionY * force * this.density;
 
-                if (distance < maxDistance) {
-                    this.x -= directionX * 3; // Mouse'dan kaçış
-                    this.y -= directionY * 3;
-                } else {
-                    if (this.x !== this.baseX) {
-                        let dx = this.x - this.baseX;
-                        this.x -= dx / 10;
+            update() {
+                // 1. Doğal Hareket: Yukarı doğru süzül
+                this.y -= this.speedY;
+
+                // 2. Mouse Etkileşimi: Kaçış
+                if (mouse.x) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    let forceDistance = 150; // Etki alanı
+                    
+                    if (distance < forceDistance) {
+                        const forceDirectionX = dx / distance;
+                        const forceDirectionY = dy / distance;
+                        const force = (forceDistance - distance) / forceDistance;
+                        
+                        // İtme gücü
+                        const directionX = forceDirectionX * force * 5;
+                        const directionY = forceDirectionY * force * 5;
+
+                        this.x -= directionX;
+                        this.y -= directionY;
                     }
-                    if (this.y !== this.baseY) {
-                        let dy = this.y - this.baseY;
-                        this.y -= dy / 10;
-                    }
+                }
+
+                // 3. Reset: Ekranın tepesinden çıkarsa alta geri ışınla
+                if (this.y < 0) {
+                    this.y = canvas.height + 10;
+                    this.x = Math.random() * canvas.width;
                 }
             }
         }
 
         function initParticles() {
             particles = [];
-            for (let i = 0; i < 150; i++) {
+            for (let i = 0; i < 100; i++) { // Partikül sayısı
                 particles.push(new Particle());
             }
         }
@@ -231,15 +272,27 @@
                     body: JSON.stringify(data)
                 });
                 if(res.ok) {
-                    alert('✅ Listing Request Sent! Waiting for Admin verification.');
-                    e.target.reset();
+                    // Başarılı olduğunda butonu yeşil yap
+                    btn.classList.remove('bg-white', 'text-black');
+                    btn.classList.add('bg-emerald-500', 'text-white');
+                    btn.innerHTML = 'Request Sent Successfully';
+                    setTimeout(() => {
+                         e.target.reset();
+                         btn.classList.add('bg-white', 'text-black');
+                         btn.classList.remove('bg-emerald-500', 'text-white');
+                         btn.innerHTML = originalText;
+                         btn.disabled = false;
+                    }, 3000);
                 } else {
                     alert('Error submitting form.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
-            } catch(err) { alert('Connection Error'); }
-            
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            } catch(err) { 
+                alert('Connection Error');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         });
     </script>
 </body>
