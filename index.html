@@ -23,14 +23,16 @@
             scroll-behavior: smooth;
         }
 
-        /* THREE.JS CANVAS */
+        /* THREE.JS CANVAS - Z-INDEX FIX */
         #bg-canvas {
             position: fixed;
             top: 0;
             left: 0;
-            z-index: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* EN ALTA GÖMÜLDÜ */
             opacity: 0.4;
-            pointer-events: none; /* Mouse tıklamalarını geçirir */
+            pointer-events: none; /* Tıklamaları kesinlikle geçirir */
         }
 
         .glass {
@@ -45,7 +47,7 @@
             position: fixed;
             inset: 0;
             z-index: 100;
-            display: none; /* Başlangıçta gizli */
+            display: none;
             align-items: center;
             justify-content: center;
             background: rgba(0,0,0,0.4);
@@ -85,6 +87,10 @@
             font-weight: 700;
         }
 
+        /* Navigasyon ve İçerik için Z-Index Ayarı */
+        nav { z-index: 50; }
+        #main-content { position: relative; z-index: 10; }
+
         .stash-card { transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; }
         .stash-card:hover { border-color: rgba(255, 255, 255, 0.3); }
         .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(25px); opacity: 0; }
@@ -98,7 +104,7 @@
 
     <canvas id="bg-canvas"></canvas>
 
-    <nav id="main-nav" class="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
+    <nav id="main-nav" class="fixed top-0 w-full px-8 py-6 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
         <div class="flex items-center space-x-2">
             <div class="w-8 h-8 bg-white rounded-sm rotate-45 flex items-center justify-center">
                 <i data-lucide="box" class="text-black w-4 h-4 -rotate-45"></i>
@@ -106,14 +112,14 @@
             <span class="text-xl font-bold tracking-tighter uppercase">Vault.smp</span>
         </div>
         <div class="flex items-center space-x-8 text-xs font-semibold uppercase tracking-widest opacity-60">
-            <button onclick="openSellMode()" class="text-emerald-400 hover:text-emerald-300 transition font-bold tracking-widest cursor-pointer relative z-50">SELL STASH</button>
+            <button id="btn-sell-stash" class="text-emerald-400 hover:text-emerald-300 transition font-bold tracking-widest cursor-pointer relative z-50">SELL STASH</button>
             <a href="#how-it-works" onclick="smoothScroll(event, '#how-it-works')" class="hover:opacity-100 transition cursor-pointer">How it Works?</a>
             <a href="#showroom" onclick="smoothScroll(event, '#showroom')" class="hover:opacity-100 transition cursor-pointer">Catalogue</a>
             <a href="https://discord.gg/yourlink" target="_blank" class="bg-white text-black px-6 py-2 rounded-full hover:scale-105 transition duration-300 cursor-pointer">Contact Admin</a>
         </div>
     </nav>
 
-    <div id="main-content" class="origin-center relative z-10">
+    <div id="main-content" class="origin-center">
         
         <section class="min-h-screen flex flex-col justify-center items-center px-6 pt-20">
             <div class="max-w-4xl text-center">
@@ -184,7 +190,7 @@
     </div>
 
     <div id="sell-overlay">
-        <button onclick="closeSellMode()" class="absolute top-10 right-10 z-50 text-white/30 hover:text-white transition transform hover:rotate-90 duration-300">
+        <button id="btn-close-sell" class="absolute top-10 right-10 z-50 text-white/30 hover:text-white transition transform hover:rotate-90 duration-300">
             <i data-lucide="x" class="w-10 h-10"></i>
         </button>
 
@@ -322,22 +328,22 @@
             });
         }
 
-        // --- TRANSITION LOGIC (Zamanlamalar Hızlandırıldı + ClearProps Eklendi) ---
+        // --- TRANSITION LOGIC ---
         function openSellMode() {
             isSellModeActive = true;
             const tl = gsap.timeline();
             
-            // YAZILARIN KAYBOLMASI (Hızlandırıldı: 0.3s)
+            // 1. Yazılar ÇOK HIZLI kaybolsun (0.2s)
             tl.to("#main-content", { 
-                duration: 0.3, 
+                duration: 0.2, 
                 opacity: 0, 
                 scale: 0.95, 
                 filter: "blur(10px)", 
                 pointerEvents: "none", 
-                ease: "power2.inOut" 
+                ease: "power2.in" 
             }, "start");
 
-            // KÜPLERİN PATLAMASI (0.8s)
+            // 2. Küpler Patlasın (0.8s)
             cubes.forEach((cube, i) => {
                 const pushDirX = initialPositions[i].x > 0 ? 1 : -1;
                 const pushDirY = initialPositions[i].y > 0 ? 1 : -1;
@@ -347,7 +353,7 @@
                 tl.to(cube.rotation, { z: "+=2", duration: 0.8, ease: "power1.out" }, "start");
             });
 
-            // FORM GELİŞİ
+            // 3. Form Gelsin
             const overlay = document.getElementById('sell-overlay');
             overlay.style.display = 'flex';
             gsap.fromTo("#sell-form-card", { opacity: 0, y: 50, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, delay: 0.2, ease: "expo.out" });
@@ -364,7 +370,7 @@
                 opacity: 1, 
                 scale: 1, 
                 filter: "blur(0px)", 
-                clearProps: "filter", // BU KOD BUZLU CAMIN BOZULMASINI ENGELLER
+                clearProps: "filter", 
                 pointerEvents: "auto", 
                 ease: "power2.out" 
             }, "return");
@@ -486,7 +492,7 @@
         function openLightbox(src) { const lb = document.getElementById('lightbox'); const lbImg = document.getElementById('lightbox-img'); lbImg.src = src; lb.classList.remove('hidden'); lb.classList.add('flex'); gsap.fromTo(lb, { opacity: 0 }, { opacity: 1, duration: 0.3 }); gsap.fromTo(lbImg, { scale: 0.8 }, { scale: 1, duration: 0.4, ease: "power2.out" }); }
         function closeLightbox() { const lb = document.getElementById('lightbox'); gsap.to(lb, { opacity: 0, duration: 0.2, onComplete: () => { lb.classList.add('hidden'); lb.classList.remove('flex'); }}); }
 
-        // --- INIT ---
+        // --- INIT & EVENT LISTENERS ---
         window.addEventListener('load', () => {
             initThree();
             loadStashes();
@@ -499,16 +505,21 @@
                 .to("#hero-desc", { opacity: 1, y: 0, duration: 1 }, "-=0.6")
                 .to("#scroll-arrow", { opacity: 1, y: 0, duration: 1 }, "-=0.6");
 
-            // Filter Highlight Fix
+            // Filter Highlight
             const activeBtn = document.querySelector('.filter-btn.active');
             const highlight = document.getElementById('filter-highlight');
             if(activeBtn && highlight) {
                 highlight.style.left = `${activeBtn.offsetLeft}px`;
                 highlight.style.width = `${activeBtn.offsetWidth}px`;
             }
+
+            // --- EVENT LISTENERS (ÇOK ÖNEMLİ) ---
+            // Modern Event Listener kullanıyoruz (onclick çakışmasını önler)
+            document.getElementById('btn-sell-stash').addEventListener('click', openSellMode);
+            document.getElementById('btn-close-sell').addEventListener('click', closeSellMode);
         });
 
-        // Use modern event listener instead of onclick override
+        // Global Kapatma İşlemleri (Boşluğa tıklayınca)
         window.addEventListener('click', (e) => {
             if (e.target == document.getElementById('modal')) closeModal(); 
             if (e.target == document.getElementById('sell-overlay')) closeSellMode(); 
@@ -516,4 +527,3 @@
     </script>
 </body>
 </html>
-
