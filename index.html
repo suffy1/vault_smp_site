@@ -23,7 +23,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- PRELOADER & GLITCH STYLES (YENİ) --- */
+        /* --- PRELOADER STYLES --- */
         #preloader {
             position: fixed;
             inset: 0;
@@ -45,6 +45,8 @@
             opacity: 0;
             display: block;
             margin-bottom: 4px;
+            position: relative; /* Pseudo-elementler için */
+            display: inline-block; /* Glitch'in doğru çalışması için */
         }
 
         .cursor {
@@ -58,20 +60,69 @@
         }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* GLITCH ANIMATION KEYFRAMES */
-        @keyframes glitch-anim {
-            0% { transform: translate(0); text-shadow: none; opacity: 1; }
-            20% { transform: translate(-2px, 2px); text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9; }
-            40% { transform: translate(2px, -2px); text-shadow: -2px 0 #ff00c1, 2px 0 #00fff9; }
-            60% { transform: translate(-2px, 0); opacity: 0.8; }
-            80% { transform: translate(2px, 0); text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9; }
-            100% { transform: translate(0); opacity: 0; } /* Sonunda yok olsun */
+        /* --- YENİ "TRUE GLITCH" EFEKTİ (TEK RENK & PARÇALANMA) --- */
+        
+        /* Ana metni hafifçe sallar */
+        @keyframes glitch-skew {
+            0% { transform: skew(0deg); }
+            20% { transform: skew(2deg); }
+            40% { transform: skew(-2deg); }
+            60% { transform: skew(1deg); }
+            80% { transform: skew(-1deg); }
+            100% { transform: skew(0deg); }
         }
 
-        .glitch-active .log-line, .glitch-active .cursor {
-            animation: glitch-anim 0.3s steps(2) forwards; /* Çok hızlı bozulma */
-            color: #fff; /* Yazılar beyaza dönsün bozulurken */
+        /* Metni parçalayıp kaydıran ana animasyon (Referans görsele uygun) */
+        @keyframes glitch-anim {
+            0% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(0); }
+            10% { clip-path: polygon(0 5%, 100% 5%, 100% 15%, 0 15%); transform: translate(-5px); }
+            20% { clip-path: polygon(0 25%, 100% 25%, 100% 35%, 0 35%); transform: translate(5px); }
+            30% { clip-path: polygon(0 40%, 100% 40%, 100% 50%, 0 50%); transform: translate(-3px); }
+            40% { clip-path: polygon(0 60%, 100% 60%, 100% 70%, 0 70%); transform: translate(7px); }
+            50% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(0); }
+            60% { clip-path: polygon(0 10%, 100% 10%, 100% 20%, 0 20%); transform: translate(4px); }
+            70% { clip-path: polygon(0 30%, 100% 30%, 100% 40%, 0 40%); transform: translate(-6px); }
+            80% { clip-path: polygon(0 55%, 100% 55%, 100% 65%, 0 65%); transform: translate(3px); }
+            90% { clip-path: polygon(0 80%, 100% 80%, 100% 90%, 0 90%); transform: translate(-4px); }
+            100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(0); }
         }
+
+        /* Glitch aktif olduğunda uygulanacak stiller */
+        .glitch-active .log-line {
+            animation: glitch-skew 0.5s infinite linear alternate-reverse;
+        }
+
+        /* Metnin kopyalarını oluşturup parçalama efektini uygula */
+        .glitch-active .log-line::before,
+        .glitch-active .log-line::after {
+            content: attr(data-text); /* JS ile eklenen metni al */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000; /* Arka planla aynı renk */
+            color: #10b981; /* SADECE YEŞİL RENK */
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); /* Başlangıçta tam görünür */
+        }
+
+        /* İlk kopya için animasyon */
+        .glitch-active .log-line::before {
+            animation: glitch-anim 0.6s infinite linear alternate-reverse;
+            left: 2px; /* Hafif kaydırma */
+        }
+
+        /* İkinci kopya için animasyon (farklı hız ve yön) */
+        .glitch-active .log-line::after {
+            animation: glitch-anim 0.4s infinite linear alternate-reverse reverse;
+            left: -2px; /* Hafif kaydırma */
+        }
+        
+        /* İmleç de bozulsun */
+        .glitch-active .cursor {
+            animation: glitch-skew 0.3s infinite linear alternate-reverse;
+        }
+
 
         /* KATMAN 0: CANVAS */
         #bg-canvas {
@@ -353,16 +404,17 @@
                     const p = document.createElement('div');
                     p.className = 'log-line';
                     p.innerText = log;
+                    // JS ile data-text attribute'u ekle (Glitch efekti için gerekli)
+                    p.setAttribute('data-text', log);
                     logContainer.appendChild(p);
-                    gsap.to(p, { opacity: 1, duration: 0.1 }); // Hızlı yazma efekti
+                    gsap.to(p, { opacity: 1, duration: 0.1 });
 
-                    // SON MESAJ GELDİĞİNDE:
                     if (index === logs.length - 1) {
                         setTimeout(() => {
                             // GLITCH EFFECT BAŞLAT
                             preloader.classList.add('glitch-active');
                             
-                            // KISA BİR SÜRE SONRA PRELOADER'I SİL
+                            // Glitch bittikten sonra preloader'ı yok et
                             setTimeout(() => {
                                 gsap.to(preloader, {
                                     opacity: 0,
@@ -372,7 +424,7 @@
                                         startSiteAnimations();
                                     }
                                 });
-                            }, 400); // 400ms Glitch süresi
+                            }, 600); // Glitch süresi (CSS animasyon süresiyle uyumlu)
                         }, 200);
                     }
                 }, delay);
@@ -611,3 +663,4 @@
     </script>
 </body>
 </html>
+
