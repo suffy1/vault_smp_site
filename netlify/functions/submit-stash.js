@@ -1,5 +1,4 @@
 exports.handler = async (event, context) => {
-    // Sadece POST isteklerini kabul et
     if (event.httpMethod !== "POST") {
         return { statusCode: 405, body: "Method Not Allowed" };
     }
@@ -7,47 +6,38 @@ exports.handler = async (event, context) => {
     try {
         const data = JSON.parse(event.body);
 
-        // YENİ VERİ YAPISI:
-        // security YOK, region VAR.
+        // YENİ DATA YAPISI
         const { seller, price, title, region, description, images } = data;
 
-        // Basit Validasyon (Backend tarafında da kontrol şart)
+        // Validasyon
         if (!seller || !price || !title || !region || !description) {
             return { 
                 statusCode: 400, 
-                body: JSON.stringify({ message: "Eksik bilgi girdiniz." }) 
+                body: JSON.stringify({ message: "Eksik bilgi." }) 
             };
         }
 
-        // --- BURASI VERİTABANI BAĞLANTISI ---
-        // (Eğer MongoDB, Supabase veya JSONBin kullanıyorsan burayı güncellemelisin)
-        // Şimdilik test için konsola basıyoruz ve başarılı dönüyoruz.
-        
         const newStash = {
-            id: Date.now(), // Geçici ID
+            id: Date.now(),
             seller,
             price,
             title,
-            region, // ARTIK SERVER BİLGİSİ KAYDEDİLİYOR
+            region, // Security yerine Region kaydediyoruz
             description,
-            images, // ARTIK DİZİ (ARRAY) OLARAK GELİYOR
-            status: "Pending", // İlk eklendiğinde onay bekliyor
+            images, // Array olarak geliyor
+            status: "Pending",
             date: new Date().toISOString()
         };
 
-        console.log("YENİ STASH GELDİ:", newStash);
-
-        // --- VERİTABANI KAYIT KODUNU BURAYA YAZACAKSIN ---
+        // BURADA VERİTABANI KAYIT İŞLEMİ OLACAK
+        console.log("Kullanıcı İlanı:", newStash);
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ message: "İlan başarıyla alındı!", data: newStash }),
+            body: JSON.stringify({ message: "İlan alındı!", data: newStash }),
         };
 
     } catch (error) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: "Sunucu hatası", error: error.toString() }),
-        };
+        return { statusCode: 500, body: JSON.stringify({ error: error.toString() }) };
     }
 };
