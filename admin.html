@@ -3,235 +3,716 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vault Command | Admin</title>
+    <title>STASH VAULT | Exclusive Showroom</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
-        body { font-family: 'Outfit', sans-serif; background-color: #0c0c0c; color: white; }
-        .glass-panel { background: #111; border: 1px solid #333; }
-        input, textarea, select { background: #000; border: 1px solid #333; color: white; padding: 10px; width: 100%; border-radius: 6px; }
-        .tab-active { border-bottom: 2px solid #34d399; color: #34d399; }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        /* TEMEL AYARLAR */
+        ::-webkit-scrollbar { display: none; }
+        html { scrollbar-width: none; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #050505;
+            color: #ffffff;
+            overflow-x: hidden;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- PRELOADER STYLES (BEYAZ GLITCH) --- */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            background-color: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding-left: 10vw;
+            font-family: 'JetBrains Mono', monospace;
+            color: #ffffff; /* ARTIK BEYAZ */
+            font-size: 1rem;
+            line-height: 1.5;
+            overflow: hidden;
+        }
+
+        #logs {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+        }
+        
+        .log-line {
+            opacity: 0;
+            position: relative; 
+            display: block;
+            margin-bottom: 5px;
+            white-space: nowrap;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background-color: #ffffff; /* BEYAZ */
+            animation: blink 0.8s infinite;
+            vertical-align: text-bottom;
+            margin-left: 5px;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* GLITCH EFEKTİ (BEYAZ) */
+        .glitch-active .log-line::before,
+        .glitch-active .log-line::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #ffffff; /* BEYAZ */
+            opacity: 1;
+            clip-path: inset(100% 0 0 0);
+            overflow: hidden; 
+        }
+
+        @keyframes glitch-horizontal-1 {
+            0%, 80%, 100% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+            81% { clip-path: inset(20% 0 50% 0); transform: translateX(-100px); }
+            82% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+            91% { clip-path: inset(60% 0 35% 0); transform: translateX(-60px); }
+            92% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+        }
+
+        @keyframes glitch-horizontal-2 {
+            0%, 85%, 100% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+            86% { clip-path: inset(10% 0 80% 0); transform: translateX(120px); }
+            87% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+            95% { clip-path: inset(75% 0 5% 0); transform: translateX(80px); }
+            96% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+        }
+
+        .glitch-active .log-line::before { animation: glitch-horizontal-1 3s infinite linear; }
+        .glitch-active .log-line::after { animation: glitch-horizontal-2 2.5s infinite linear reverse; }
+
+        /* --- KATMANLAR --- */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.4; pointer-events: none !important; }
+        #main-content { position: relative; z-index: 10; opacity: 0; }
+        nav { z-index: 50; opacity: 0; }
+
+        /* --- STYLE SETTINGS --- */
+        .glass {
+            background: rgba(20, 20, 20, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .sell-glass {
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 100px rgba(0,0,0,0.9);
+        }
+
+        .modal-overlay, #sell-overlay {
+            position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0, 0, 0, 0.95); visibility: hidden; opacity: 0;
+        }
+        #sell-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); }
+
+        .stash-card { transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; pointer-events: auto; }
+        .stash-card:hover { border-color: rgba(255, 255, 255, 0.3); }
+        button, a, input, textarea { cursor: pointer; pointer-events: auto; }
+
+        input, textarea {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: #fff;
+            padding: 12px 16px; border-radius: 10px; width: 100%; outline: none; transition: all 0.3s; font-family: 'Outfit', sans-serif;
+        }
+        input:focus, textarea:focus { border-color: #10b981; background: rgba(16, 185, 129, 0.05); transform: translateY(-1px); }
+        label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.25em; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; display: block; font-weight: 700; }
+
+        .filter-btn.active { color: black; transition: color 0.3s ease; }
+        .seller-badge-official { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+        .seller-badge-user { color: #34d399; }
+
+        /* --- CUSTOM DROPDOWN STYLES --- */
+        .custom-select-wrapper { position: relative; width: 100%; user-select: none; }
+        .custom-select-trigger {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: #fff;
+            padding: 12px 16px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .custom-select-trigger:hover { border-color: #10b981; }
+        .custom-select-trigger::after { content: '▼'; font-size: 0.6rem; margin-left: 10px; transition: transform 0.3s; }
+        .custom-select-wrapper.open .custom-select-trigger::after { transform: rotate(180deg); }
+        
+        .custom-options {
+            position: absolute; top: 110%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px; overflow: hidden; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); }
+        
+        .custom-option {
+            padding: 12px 16px; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+        .custom-option:hover { background: rgba(16, 185, 129, 0.1); color: #10b981; padding-left: 24px; }
+        .custom-option.selected { color: #10b981; font-weight: bold; }
+
+        /* --- IMAGE PREVIEW GRID --- */
+        .image-preview-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px;
+        }
+        .preview-thumb {
+            position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .preview-remove {
+            position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: white;
+            width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 10px; transition: background 0.2s;
+        }
+        .preview-remove:hover { background: #ef4444; }
+
     </style>
 </head>
-<body class="p-6">
+<body>
+
+    <div id="preloader">
+        <div id="logs"></div>
+        <div><span class="cursor"></span></div>
+    </div>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <nav id="main-nav" class="fixed top-0 w-full px-8 py-6 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+        <div class="flex items-center space-x-2 pointer-events-auto">
+            <div class="w-8 h-8 bg-white rounded-sm rotate-45 flex items-center justify-center">
+                <i data-lucide="box" class="text-black w-4 h-4 -rotate-45"></i>
+            </div>
+            <span class="text-xl font-bold tracking-tighter uppercase">Vault.smp</span>
+        </div>
+        <div class="flex items-center space-x-8 text-xs font-semibold uppercase tracking-widest opacity-80 pointer-events-auto">
+            <button id="btn-sell-stash" class="text-emerald-400 hover:text-emerald-300 transition font-bold tracking-widest hover:scale-105 transform">SELL STASH</button>
+            <a href="#how-it-works" onclick="smoothScroll(event, '#how-it-works')" class="hover:opacity-100 hover:text-white transition">How it Works?</a>
+            <a href="#showroom" onclick="smoothScroll(event, '#showroom')" class="hover:opacity-100 hover:text-white transition">Catalogue</a>
+            <a href="https://discord.gg/yourlink" target="_blank" class="bg-white text-black px-6 py-2 rounded-full hover:scale-105 transition duration-300 shadow-lg shadow-white/10">Contact Admin</a>
+        </div>
+    </nav>
+
+    <div id="main-content">
+        <section class="min-h-screen flex flex-col justify-center items-center px-6 pt-20">
+            <div class="max-w-4xl text-center z-10 pointer-events-none">
+                <p id="hero-sub" class="text-xs font-bold uppercase tracking-[0.4em] mb-4 opacity-0 translate-y-4">Private Inventory</p>
+                <h1 id="hero-title" class="text-6xl md:text-8xl font-bold mb-8 leading-tight tracking-tighter opacity-0">
+                    THE ELITE <br> <span class="italic font-light text-white/50">STASH SHOWROOM</span>
+                </h1>
+                <div id="hero-line" class="w-24 h-px bg-white/20 mx-auto mb-8 scale-x-0"></div>
+                <p id="hero-desc" class="text-slate-400 max-w-xl mx-auto text-sm md:text-base leading-relaxed opacity-0 translate-y-4">
+                    Curated collection of high-security coordinates and assets on Donut SMP. 
+                    Everything from subterranean bunkers to void-level skybases.
+                </p>
+            </div>
+            <div id="scroll-arrow" class="mt-16 opacity-0 translate-y-4 flex justify-center pointer-events-auto">
+                <button onclick="smoothScroll(event, '#showroom')" class="text-white/30 hover:text-white transition-colors duration-300 animate-bounce">
+                    <i data-lucide="chevrons-down" class="w-10 h-10"></i>
+                </button>
+            </div>
+        </section>
+
+        <section id="showroom" class="max-w-7xl mx-auto px-8 pb-20 pt-20">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-20 gap-8">
+                <h2 class="text-sm font-bold uppercase tracking-widest opacity-40 whitespace-nowrap">Active Listings</h2>
+                <div class="h-px bg-white/10 flex-grow hidden md:block"></div>
+                <div class="relative flex bg-white/5 p-1 rounded-full border border-white/10" id="filter-wrapper">
+                    <div id="filter-highlight" class="absolute bg-white rounded-full transition-all duration-300 ease-in-out z-0 pointer-events-none" style="top: 4px; bottom: 4px; left: 4px; width: 0;"></div>
+                    <button onclick="filterItems('All', this)" class="filter-btn active relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition pointer-events-auto">All</button>
+                    <button onclick="filterItems('Available', this)" class="filter-btn relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition pointer-events-auto">Available</button>
+                    <button onclick="filterItems('Sold', this)" class="filter-btn relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition pointer-events-auto">Sold</button>
+                </div>
+            </div>
+            <div id="stash-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 min-h-[300px]">
+                 <p class="text-white/30 text-center col-span-full pt-10">Loading catalogue...</p>
+            </div>
+        </section>
+
+        <section id="how-it-works" class="max-w-7xl mx-auto px-8 pb-40">
+            <div class="h-px bg-white/10 w-full mb-20"></div>
+            <div class="text-center mb-16">
+                <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-500 mb-4 block">Secure Protocol</span>
+                <h2 class="text-4xl md:text-5xl font-bold tracking-tight">PURCHASE PROCESS</h2>
+            </div>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass rounded-[2.5rem] p-10 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition"><i data-lucide="badge-check" class="w-32 h-32"></i></div>
+                    <div class="flex items-center space-x-3 mb-6"><i data-lucide="shield-check" class="text-amber-400 w-6 h-6"></i><h3 class="text-xl font-bold text-amber-400 tracking-wide">OFFICIAL VAULT LISTING</h3></div>
+                    <p class="text-white/60 text-sm leading-relaxed mb-8 h-12">Direct purchase from Vault SMP inventory. Highest security clearance.</p>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-4 bg-white/5 p-4 rounded-xl"><span class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm">1</span><div class="text-xs text-white/80">Buyer pays <strong>Vault SMP</strong> directly.</div></div>
+                        <div class="flex items-center justify-center"><i data-lucide="arrow-down" class="w-5 h-5 text-white/20"></i></div>
+                        <div class="flex items-center space-x-4 bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl"><span class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-sm">2</span><div class="text-xs text-white/80">Vault SMP delivers coordinates instantly.</div></div>
+                    </div>
+                </div>
+                <div class="glass rounded-[2.5rem] p-10 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition"><i data-lucide="users" class="w-32 h-32"></i></div>
+                    <div class="flex items-center space-x-3 mb-6"><i data-lucide="lock" class="text-emerald-400 w-6 h-6"></i><h3 class="text-xl font-bold text-emerald-400 tracking-wide">COMMUNITY LISTING</h3></div>
+                    <p class="text-white/60 text-sm leading-relaxed mb-8 h-12">Player-to-player sale secured by Vault SMP Middleman Service.</p>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-4 bg-white/5 p-3 rounded-xl"><span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center font-bold text-xs">1</span><div class="text-[11px] text-white/80">Buyer sends money to <strong>Vault SMP</strong> (Held in Escrow).</div></div>
+                        <div class="flex items-center justify-center"><i data-lucide="arrow-down" class="w-4 h-4 text-white/20"></i></div>
+                        <div class="flex items-center space-x-4 bg-white/5 p-3 rounded-xl"><span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center font-bold text-xs">2</span><div class="text-[11px] text-white/80">Seller gives coords to Vault SMP for <strong>Verification</strong>.</div></div>
+                        <div class="flex items-center justify-center"><i data-lucide="arrow-down" class="w-4 h-4 text-white/20"></i></div>
+                        <div class="flex items-center space-x-4 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl"><span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">3</span><div class="text-[11px] text-white/80">Exchange Complete.</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="sell-overlay">
+        <div id="sell-form-card" class="sell-glass w-full max-w-[550px] p-8 rounded-3xl relative overflow-hidden mx-4 opacity-0 translate-y-20 scale-95">
+             <button id="btn-close-sell" class="absolute top-6 right-6 z-50 text-white/30 hover:text-white transition transform hover:rotate-90 duration-300 pointer-events-auto">
+                <i data-lucide="x" class="w-6 h-6"></i>
+             </button>
+             <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+             <div class="mb-6 text-center">
+                 <h1 class="text-3xl font-bold tracking-tight mb-2 text-white">SUBMIT STASH</h1>
+                 <div class="w-12 h-0.5 bg-emerald-500/50 mx-auto rounded-full"></div>
+             </div>
+             <form id="sellForm" class="space-y-4">
+                 <div class="grid grid-cols-2 gap-4">
+                     <div class="group"><label>Identity</label><input type="text" id="seller" placeholder="Discord / IGN" required></div>
+                     <div class="group"><label>Valuation</label><input type="text" id="price" placeholder="Price ($)" required></div>
+                 </div>
+                 
+                 <div class="grid grid-cols-2 gap-4">
+                     <div class="group"><label>Title</label><input type="text" id="title" placeholder="Stash Name" required></div>
+                     <div class="group">
+                         <label>Server Region</label>
+                         <div class="custom-select-wrapper">
+                             <div class="custom-select-trigger"><span>Select Server...</span></div>
+                             <div class="custom-options">
+                                 <span class="custom-option" data-value="NA West">NA West</span>
+                                 <span class="custom-option" data-value="NA East">NA East</span>
+                                 <span class="custom-option" data-value="EU Central">EU Central</span>
+                                 <span class="custom-option" data-value="EU East">EU East</span>
+                                 <span class="custom-option" data-value="Asia">Asia</span>
+                                 <span class="custom-option" data-value="Oceania">Oceania</span>
+                             </div>
+                             <input type="hidden" id="region" name="region" required>
+                         </div>
+                     </div>
+                 </div>
+
+                 <div class="group">
+                     <label>Stash Details</label>
+                     <textarea id="description" rows="3" placeholder="Detailed Manifest, Coords, and Notes..." required class="resize-none"></textarea>
+                 </div>
+
+                 <div class="group">
+                     <label>Evidence (Imgur Links)</label>
+                     <textarea id="images" rows="2" placeholder="Paste Imgur links here (One per line)..." class="resize-none font-mono text-xs text-emerald-400/80 mb-2"></textarea>
+                     <div id="image-preview-container" class="image-preview-grid"></div>
+                 </div>
+
+                 <button type="submit" class="w-full bg-white hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] mt-2 group overflow-hidden relative">
+                     <span class="relative z-10">Initialize Upload</span>
+                     <i data-lucide="arrow-right" class="w-3.5 h-3.5 relative z-10 group-hover:translate-x-1 transition-transform"></i>
+                 </button>
+             </form>
+        </div>
+    </div>
+
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content bg-zinc-950 w-full max-w-5xl rounded-[2rem] overflow-hidden glass flex flex-col md:flex-row relative shadow-2xl shadow-black/50">
+            <button onclick="closeModal()" class="absolute top-4 right-4 z-[130] bg-white/10 text-white p-2 rounded-full hover:bg-white hover:text-black transition backdrop-blur-md pointer-events-auto"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <div class="w-full md:w-[65%] bg-black relative group flex flex-col justify-center overflow-hidden">
+                <div id="modal-slider" class="flex h-[400px] md:h-[500px] transition-transform duration-500 ease-out"></div>
+                <div id="gallery-nav" class="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <button onclick="changeImage(-1)" class="p-3 rounded-full bg-black/50 hover:bg-white hover:text-black text-white pointer-events-auto transition-all backdrop-blur-sm"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+                    <button onclick="changeImage(1)" class="p-3 rounded-full bg-black/50 hover:bg-white hover:text-black text-white pointer-events-auto transition-all backdrop-blur-sm"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
+                </div>
+                <div class="absolute bottom-4 left-4 flex gap-2">
+                    <div class="bg-black/60 px-3 py-1 rounded-md text-[10px] font-bold border border-white/10 text-white backdrop-blur-md"><span id="current-img-idx">1</span> / <span id="total-img-count">1</span></div>
+                    <div class="bg-emerald-500/20 px-3 py-1 rounded-md text-[10px] font-bold text-emerald-400 border border-emerald-500/20 backdrop-blur-md flex items-center gap-1"><i data-lucide="zoom-in" class="w-3 h-3"></i> Click to Expand</div>
+                </div>
+            </div>
+            <div class="w-full md:w-[35%] p-8 flex flex-col justify-center bg-zinc-950/80 border-l border-white/5 relative">
+                <div class="mb-auto pt-4">
+                    <span id="modal-region" class="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.2em] mb-2 block">Region</span>
+                    <h3 id="modal-title" class="text-3xl md:text-4xl font-bold mb-2 text-white leading-tight">Title</h3>
+                    <div id="modal-seller-info" class="mb-2 text-xs font-bold tracking-widest uppercase"></div>
+                    <div id="modal-price" class="text-white/60 font-light text-xl tracking-tight">Price</div>
+                </div>
+                <div class="my-8"><p id="modal-desc" class="text-slate-400 text-sm leading-relaxed font-light border-l-2 border-white/10 pl-4"></p></div>
+                <div class="mt-auto"><a id="contact-btn" href="https://discord.gg/yourlink" target="_blank" class="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-transform active:scale-95"><i data-lucide="message-square" class="w-4 h-4"></i><span class="uppercase text-xs tracking-widest">Contact to Buy</span></a></div>
+            </div>
+        </div>
+    </div>
     
-    <div class="max-w-7xl mx-auto">
-        <div class="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-            <h1 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="shield-alert" class="text-emerald-500"></i> COMMAND CENTER</h1>
-            <div class="flex gap-2">
-                <input type="password" id="adminPass" placeholder="Admin Password" class="w-48">
-                <button onclick="loadDashboard()" class="bg-white text-black px-4 py-2 rounded font-bold hover:bg-emerald-400 transition">LOGIN / REFRESH</button>
-            </div>
-        </div>
-
-        <div class="flex space-x-6 mb-6 text-sm font-bold uppercase tracking-widest text-white/40">
-            <button onclick="switchTab('manage')" id="tab-manage" class="pb-2 tab-active transition">Manage Listings</button>
-            <button onclick="switchTab('add')" id="tab-add" class="pb-2 transition hover:text-white">Add Official Stash</button>
-        </div>
-
-        <div id="view-manage" class="block">
-            <div class="mb-12">
-                <h2 class="text-amber-400 font-bold text-xs tracking-[0.2em] mb-4 uppercase flex items-center gap-2"><i data-lucide="clock"></i> Pending Approval</h2>
-                <div id="pending-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </div>
-
-            <div>
-                <h2 class="text-emerald-400 font-bold text-xs tracking-[0.2em] mb-4 uppercase flex items-center gap-2"><i data-lucide="check-circle"></i> Active Database</h2>
-                <div id="active-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
-            </div>
-        </div>
-
-        <div id="view-add" class="hidden max-w-2xl">
-            <div class="glass-panel p-8 rounded-2xl">
-                <h2 class="text-xl font-bold mb-6 text-emerald-400">CREATE OFFICIAL LISTING</h2>
-                <form id="addOfficialForm" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="off-title" placeholder="Title" required>
-                        <input type="text" id="off-price" placeholder="Price" required>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="off-region" placeholder="Region" required>
-                        <input type="text" id="off-security" placeholder="Security" required>
-                    </div>
-                    <textarea id="off-desc" rows="3" placeholder="Description" required></textarea>
-                    <textarea id="off-images" rows="3" placeholder="Image URLs (One per line)" required class="font-mono text-xs text-emerald-400"></textarea>
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded font-bold">PUBLISH IMMEDIATELY</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div id="editModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#111] w-full max-w-2xl p-6 rounded-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold">EDIT LISTING</h2>
-                <button onclick="closeEditModal()" class="text-white/50 hover:text-white"><i data-lucide="x"></i></button>
-            </div>
-            
-            <form id="editForm" class="space-y-4">
-                <input type="hidden" id="edit-id">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-white/50 block mb-1">Title</label>
-                        <input type="text" id="edit-title">
-                    </div>
-                    <div>
-                        <label class="text-xs text-white/50 block mb-1">Price</label>
-                        <input type="text" id="edit-price">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-white/50 block mb-1">Seller</label>
-                        <input type="text" id="edit-seller">
-                    </div>
-                    <div>
-                        <label class="text-xs text-white/50 block mb-1">Status</label>
-                        <select id="edit-status">
-                            <option value="Pending">Pending</option>
-                            <option value="Available">Available</option>
-                            <option value="Sold">Sold</option>
-                        </select>
-                    </div>
-                </div>
-                <textarea id="edit-desc" rows="3"></textarea>
-                
-                <div>
-                    <label class="text-xs text-white/50 block mb-1">Images (One per line)</label>
-                    <textarea id="edit-images" rows="4" class="font-mono text-xs"></textarea>
-                </div>
-
-                <div class="flex gap-2 pt-4 border-t border-white/10">
-                    <button type="button" onclick="deleteStash()" class="bg-red-900/50 text-red-400 px-4 py-3 rounded font-bold hover:bg-red-900 flex-1">DELETE</button>
-                    <button type="submit" class="bg-emerald-600 text-white px-4 py-3 rounded font-bold hover:bg-emerald-500 flex-[2]">SAVE CHANGES</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <div id="lightbox" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl hidden flex-col items-center justify-center p-4 cursor-zoom-out" onclick="closeLightbox()"><button class="absolute top-6 right-6 text-white/50 hover:text-white transition"><i data-lucide="x" class="w-8 h-8"></i></button><img id="lightbox-img" src="" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl shadow-emerald-500/10 scale-95 transition-transform duration-300"><p class="text-white/30 text-xs mt-4 uppercase tracking-widest">Click anywhere to close</p></div>
 
     <script>
-        lucide.createIcons();
+        // --- PRELOADER LOGIC ---
+        const logs = [
+            "> ESTABLISHING SECURE CONNECTION...",
+            "> BYPASSING REGIONAL FIREWALLS...",
+            "> VERIFYING ENCRYPTION KEYS...",
+            "> CONNECTION ESTABLISHED.",
+            "> ACCESS GRANTED"
+        ];
 
-        function switchTab(tab) {
-            document.getElementById('view-manage').classList.add('hidden');
-            document.getElementById('view-add').classList.add('hidden');
-            document.getElementById('tab-manage').classList.remove('tab-active', 'text-emerald-400', 'border-emerald-400');
-            document.getElementById('tab-add').classList.remove('tab-active', 'text-emerald-400', 'border-emerald-400');
-            
-            document.getElementById('view-' + tab).classList.remove('hidden');
-            document.getElementById('tab-' + tab).classList.add('tab-active');
-        }
+        function runPreloader() {
+            const logContainer = document.getElementById('logs');
+            const preloader = document.getElementById('preloader');
+            let delay = 0;
 
-        async function loadDashboard() {
-            const pass = document.getElementById('adminPass').value;
-            if(!pass) return alert("Enter Password");
+            logs.forEach((log, index) => {
+                setTimeout(() => {
+                    const p = document.createElement('div');
+                    p.className = 'log-line';
+                    p.innerText = log;
+                    p.setAttribute('data-text', log);
+                    logContainer.appendChild(p);
+                    gsap.to(p, { opacity: 1, duration: 0.1 });
 
-            try {
-                const res = await fetch('/api/admin-get', {
-                    method: 'POST', body: JSON.stringify({ password: pass })
-                });
-                if(!res.ok) throw new Error("Unauthorized");
-                const data = await res.json();
-                
-                renderList(data.filter(i => i.status === 'Pending'), 'pending-grid', true);
-                renderList(data.filter(i => i.status !== 'Pending'), 'active-grid', false);
-            } catch(e) { alert(e.message); }
-        }
-
-        function renderList(items, elemId, isPending) {
-            const container = document.getElementById(elemId);
-            container.innerHTML = items.map(item => `
-                <div onclick='openEditModal(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="bg-[#151515] hover:bg-[#222] border border-white/5 p-3 rounded-lg cursor-pointer transition group">
-                    <div class="flex gap-3">
-                        <img src="${item.images[0] || ''}" class="w-16 h-16 object-cover rounded bg-black">
-                        <div>
-                            <h3 class="font-bold text-sm text-white group-hover:text-emerald-400 transition">${item.title}</h3>
-                            <p class="text-xs text-white/50">${item.seller} • ${item.price}</p>
-                            <span class="text-[10px] uppercase font-bold ${item.status === 'Available' ? 'text-emerald-500' : (item.status === 'Pending' ? 'text-amber-500' : 'text-red-500')}">${item.status}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // EDIT MODAL LOGIC
-        function openEditModal(item) {
-            document.getElementById('edit-id').value = item.id;
-            document.getElementById('edit-title').value = item.title;
-            document.getElementById('edit-price').value = item.price;
-            document.getElementById('edit-seller').value = item.seller;
-            document.getElementById('edit-status').value = item.status;
-            document.getElementById('edit-desc').value = item.description;
-            document.getElementById('edit-images').value = Array.isArray(item.images) ? item.images.join('\n') : item.images;
-            
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-        }
-
-        // SAVE EDIT
-        document.getElementById('editForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const pass = document.getElementById('adminPass').value;
-            const id = document.getElementById('edit-id').value;
-            
-            const data = {
-                id: id,
-                title: document.getElementById('edit-title').value,
-                price: document.getElementById('edit-price').value,
-                seller: document.getElementById('edit-seller').value,
-                status: document.getElementById('edit-status').value,
-                description: document.getElementById('edit-desc').value,
-                images: document.getElementById('edit-images').value.split('\n').map(x => x.trim()).filter(x => x)
-            };
-
-            await fetch('/api/admin-edit', {
-                method: 'POST',
-                body: JSON.stringify({ password: pass, action: 'update', data: data })
+                    if (index === logs.length - 1) {
+                        setTimeout(() => {
+                            preloader.classList.add('glitch-active');
+                            setTimeout(() => {
+                                gsap.to(preloader, {
+                                    opacity: 0,
+                                    duration: 0.5,
+                                    onComplete: () => {
+                                        preloader.remove();
+                                        startSiteAnimations();
+                                    }
+                                });
+                            }, 800);
+                        }, 200);
+                    }
+                }, delay);
+                delay += 500;
             });
-            closeEditModal();
-            loadDashboard();
+        }
+
+        function startSiteAnimations() {
+            gsap.to(["#main-content", "nav"], { opacity: 1, duration: 1 });
+            const tl = gsap.timeline();
+            tl.to("#hero-sub", { opacity: 0.6, y: 0, duration: 1 })
+              .to("#hero-title", { opacity: 1, duration: 1.2 }, "-=0.6")
+              .to("#hero-line", { scaleX: 1, duration: 1 }, "-=0.8")
+              .to("#hero-desc", { opacity: 1, y: 0, duration: 1 }, "-=0.6")
+              .to("#scroll-arrow", { opacity: 1, y: 0, duration: 1 }, "-=0.6");
+        }
+
+        // --- CUSTOM DROPDOWN LOGIC ---
+        function setupCustomDropdown() {
+            const wrapper = document.querySelector('.custom-select-wrapper');
+            const trigger = wrapper.querySelector('.custom-select-trigger');
+            const options = wrapper.querySelectorAll('.custom-option');
+            const hiddenInput = document.getElementById('region');
+
+            trigger.addEventListener('click', () => {
+                wrapper.classList.toggle('open');
+            });
+
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    trigger.querySelector('span').textContent = option.textContent;
+                    trigger.style.borderColor = '#10b981';
+                    trigger.style.background = 'rgba(16, 185, 129, 0.05)';
+                    hiddenInput.value = option.getAttribute('data-value');
+                    wrapper.classList.remove('open');
+                });
+            });
+
+            // Dışarı tıklayınca kapat
+            document.addEventListener('click', (e) => {
+                if (!wrapper.contains(e.target)) {
+                    wrapper.classList.remove('open');
+                }
+            });
+        }
+
+        // --- IMAGE PREVIEW & DELETE LOGIC ---
+        function setupImagePreviews() {
+            const input = document.getElementById('images');
+            const container = document.getElementById('image-preview-container');
+
+            input.addEventListener('input', updatePreviews);
+
+            function updatePreviews() {
+                const urls = input.value.split('\n').filter(url => url.trim() !== '');
+                container.innerHTML = ''; // Temizle ve yeniden oluştur
+
+                urls.forEach((url, index) => {
+                    // Basit bir URL kontrolü (resim mi değil mi diye)
+                    // Gerçek bir uygulamada daha sağlam regex kullanılabilir
+                    if (url.match(/\.(jpeg|jpg|gif|png)$/) != null || url.includes('imgur')) {
+                        const thumb = document.createElement('div');
+                        thumb.className = 'preview-thumb';
+                        
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.onerror = () => { thumb.style.display = 'none'; }; // Kırık linkleri gizle
+
+                        const removeBtn = document.createElement('div');
+                        removeBtn.className = 'preview-remove';
+                        removeBtn.innerHTML = '<i data-lucide="x"></i>';
+                        removeBtn.onclick = () => removeImage(index);
+
+                        thumb.appendChild(img);
+                        thumb.appendChild(removeBtn);
+                        container.appendChild(thumb);
+                    }
+                });
+                lucide.createIcons();
+            }
+
+            function removeImage(indexToRemove) {
+                const urls = input.value.split('\n');
+                urls.splice(indexToRemove, 1); // Listeden sil
+                input.value = urls.join('\n'); // Input'u güncelle
+                updatePreviews(); // Önizlemeyi güncelle
+            }
+        }
+
+        // --- THREE.JS LOGIC ---
+        let cubes = [];
+        let initialPositions = [];
+        let isSellModeActive = false;
+
+        function initThree() {
+            const canvas = document.getElementById('bg-canvas');
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+            const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+
+            for (let i = 0; i < 40; i++) {
+                const cube = new THREE.Mesh(geometry, material);
+                const x = (Math.random() - 0.5) * 15;
+                const y = (Math.random() - 0.5) * 15;
+                const z = (Math.random() - 0.5) * 10;
+                cube.position.set(x, y, z);
+                scene.add(cube);
+                cubes.push(cube);
+                initialPositions.push({ x, y, z }); 
+            }
+
+            let mouseX = 0, mouseY = 0;
+            window.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                cubes.forEach((cube, i) => {
+                    cube.rotation.x += 0.001;
+                    cube.rotation.y += 0.001;
+                    if (!isSellModeActive) {
+                        const targetX = initialPositions[i].x + (mouseX * 2); 
+                        const targetY = initialPositions[i].y - (mouseY * 2);
+                        cube.position.x += (targetX - cube.position.x) * 0.05;
+                        cube.position.y += (targetY - cube.position.y) * 0.05;
+                    }
+                });
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            window.addEventListener('resize', () => {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+            });
+        }
+
+        // --- TRANSITION LOGIC ---
+        function openSellMode() {
+            isSellModeActive = true;
+            const tl = gsap.timeline();
+            tl.to("#main-content", { duration: 0.2, autoAlpha: 0, scale: 0.95, filter: "blur(10px)", ease: "power2.in" }, "start");
+            cubes.forEach((cube, i) => {
+                const pushDirX = initialPositions[i].x > 0 ? 1 : -1;
+                const pushDirY = initialPositions[i].y > 0 ? 1 : -1;
+                const targetX = initialPositions[i].x + (pushDirX * 25);
+                const targetY = initialPositions[i].y + (pushDirY * 25);
+                tl.to(cube.position, { x: targetX, y: targetY, duration: 0.8, ease: "power3.inOut" }, "start");
+                tl.to(cube.rotation, { z: "+=2", duration: 0.8, ease: "power1.out" }, "start");
+            });
+            gsap.to("#sell-overlay", { autoAlpha: 1, duration: 0.1 }); 
+            gsap.fromTo("#sell-form-card", { opacity: 0, y: 50, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, delay: 0.1, ease: "expo.out" });
+        }
+
+        function closeSellMode() {
+            gsap.to("#sell-form-card", { opacity: 0, y: 50, duration: 0.4, ease: "power2.in", onComplete: () => { gsap.to("#sell-overlay", { autoAlpha: 0, duration: 0.2 }); }});
+            const tl = gsap.timeline({ onComplete: () => { isSellModeActive = false; } });
+            tl.to("#main-content", { duration: 0.8, autoAlpha: 1, scale: 1, filter: "blur(0px)", clearProps: "filter", ease: "power2.out" }, "return");
+            cubes.forEach((cube, i) => {
+                tl.to(cube.position, { x: initialPositions[i].x, y: initialPositions[i].y, z: initialPositions[i].z, duration: 1.2, ease: "power4.out" }, "return");
+            });
+        }
+
+        // --- FORM SUBMIT LOGIC ---
+        document.getElementById('sellForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'ENCRYPTING...';
+            btn.disabled = true;
+            const rawImages = document.getElementById('images').value;
+            const images = rawImages.split('\n').map(u => u.trim()).filter(u => u);
+            const data = {
+                seller: document.getElementById('seller').value,
+                price: document.getElementById('price').value,
+                title: document.getElementById('title').value,
+                region: document.getElementById('region').value, // Hidden inputtan alır
+                description: document.getElementById('description').value,
+                images: images
+            };
+            try {
+                // Not: Gerçek sunucuda burası backend'e gider
+                console.log("Submitting:", data); 
+                btn.classList.replace('bg-white', 'bg-emerald-500');
+                btn.classList.replace('text-black', 'text-white');
+                btn.innerHTML = 'UPLOAD COMPLETE';
+                setTimeout(() => { e.target.reset(); document.getElementById('image-preview-container').innerHTML = ''; btn.classList.replace('bg-emerald-500', 'bg-white'); btn.classList.replace('text-white', 'text-black'); btn.innerHTML = originalText; btn.disabled = false; closeSellMode(); }, 2000);
+            } catch(err) { btn.innerHTML = originalText; btn.disabled = false; }
         });
 
-        // DELETE
-        async function deleteStash() {
-            if(!confirm("DELETE THIS STASH?")) return;
-            const pass = document.getElementById('adminPass').value;
-            const id = document.getElementById('edit-id').value;
+        // --- DATA & FILTER ---
+        let STASH_DATA = [];
+        let currentFilter = 'All';
+        let activeImageIdx = 0;
+        let totalImagesCount = 0;
 
-            await fetch('/api/admin-edit', {
-                method: 'POST',
-                body: JSON.stringify({ password: pass, action: 'delete', id: id })
-            });
-            closeEditModal();
-            loadDashboard();
+        async function loadStashes() {
+            try {
+                const response = await fetch('/api/stashes');
+                if (!response.ok) throw new Error("Database error");
+                STASH_DATA = await response.json();
+                renderStashes();
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById('stash-grid').innerHTML = '<p class="text-white/30 text-center col-span-full pt-10">Database connection lost...</p>';
+            }
         }
 
-        // ADD OFFICIAL
-        document.getElementById('addOfficialForm').addEventListener('submit', async (e) => {
+        function smoothScroll(e, target) {
             e.preventDefault();
-            const pass = document.getElementById('adminPass').value;
-            
-            const data = {
-                title: document.getElementById('off-title').value,
-                price: document.getElementById('off-price').value,
-                region: document.getElementById('off-region').value,
-                security: document.getElementById('off-security').value,
-                description: document.getElementById('off-desc').value,
-                images: document.getElementById('off-images').value.split('\n').map(x => x.trim()).filter(x => x)
-            };
+            document.querySelector(target).scrollIntoView({ behavior: 'smooth' });
+        }
 
-            await fetch('/api/admin-add-official', {
-                method: 'POST',
-                body: JSON.stringify({ password: pass, data: data })
-            });
-            alert("Official Listing Published!");
-            e.target.reset();
-            switchTab('manage');
-            loadDashboard();
+        function filterItems(status, element) {
+            currentFilter = status;
+            const highlight = document.getElementById('filter-highlight');
+            if (element) {
+                highlight.style.left = `${element.offsetLeft}px`;
+                highlight.style.width = `${element.offsetWidth}px`;
+            }
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.toggle('active', btn === element));
+            gsap.to("#stash-grid", { opacity: 0, y: 15, duration: 0.3, onComplete: () => {
+                renderStashes();
+                gsap.to("#stash-grid", { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" });
+            }});
+        }
+
+        function renderStashes() {
+            const grid = document.getElementById('stash-grid');
+            if (!STASH_DATA.length) return;
+            const approvedStashes = STASH_DATA.filter(s => s.status !== 'Pending');
+            const filtered = approvedStashes.filter(s => currentFilter === 'All' || s.status === currentFilter);
+            if (filtered.length === 0) { grid.innerHTML = '<p class="text-white/30 text-center col-span-full pt-10">No listings found.</p>'; return; }
+            grid.innerHTML = filtered.map(stash => {
+                let sellerBadge = stash.seller === 'VaultSMP' ? 
+                    `<div class="flex items-center gap-1.5 seller-badge-official mb-1"><div class="relative flex items-center justify-center w-3.5 h-3.5"><i data-lucide="badge-check" class="absolute w-3.5 h-3.5 text-zinc-900 fill-blue-500"></i></div><span class="text-[9px] font-bold uppercase tracking-widest text-amber-400">Seller: VaultSMP</span></div>` :
+                    `<div class="flex items-center gap-1.5 seller-badge-user mb-1"><i data-lucide="user" class="w-3 h-3"></i><span class="text-[9px] font-bold uppercase tracking-widest text-emerald-400">Seller: ${stash.seller}</span></div>`;
+                let mainImage = Array.isArray(stash.images) ? stash.images[0] : stash.images;
+                if(!mainImage) mainImage = 'https://via.placeholder.com/800x450';
+                return `
+                <div class="stash-card glass rounded-[2rem] p-4 group" onclick="openModal(${stash.id})">
+                    <div class="relative aspect-video w-full rounded-[1.5rem] overflow-hidden mb-6 bg-zinc-900">
+                        <img src="${mainImage}" class="w-full h-full object-cover transition duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0 opacity-40 group-hover:opacity-100">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                        <div class="absolute bottom-5 left-6 w-full pr-6">${sellerBadge}<h4 class="text-base font-bold tracking-tight text-white">${stash.title}</h4><p class="text-emerald-400 font-bold text-sm tracking-tight">${stash.price}</p></div>
+                        <div class="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-2 py-1 rounded-lg border border-white/5"><span class="text-[8px] uppercase font-bold tracking-widest text-white/60">${stash.region}</span></div>
+                    </div>
+                    <div class="px-2 flex justify-between items-center"><span class="text-[9px] font-bold uppercase tracking-widest ${stash.status === 'Available' ? 'text-white/40' : 'text-red-500/60'}">${stash.status}</span><div class="w-9 h-9 rounded-xl border border-white/5 bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-500"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></div></div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // Modal Functions (Security Level Removed)
+        function openModal(id) {
+            const stash = STASH_DATA.find(s => s.id === id); if(!stash) return;
+            const modal = document.getElementById('modal'); const slider = document.getElementById('modal-slider');
+            let imagesArray = Array.isArray(stash.images) ? stash.images : [stash.images];
+            activeImageIdx = 0; totalImagesCount = imagesArray.length;
+            
+            // Veri atamaları (Security YOK)
+            document.getElementById('modal-title').innerText = stash.title; 
+            document.getElementById('modal-price').innerText = stash.price; 
+            document.getElementById('modal-region').innerText = stash.region; 
+            document.getElementById('modal-desc').innerText = stash.description; 
+            
+            document.getElementById('modal-seller-info').innerHTML = stash.seller === 'VaultSMP' ? `<span class="text-amber-400 flex items-center gap-2"><div class="relative flex items-center justify-center w-4 h-4"><i data-lucide="badge-check" class="absolute w-4 h-4 text-zinc-900 fill-blue-500"></i></div> SELLER: VAULTSMP</span>` : `<span class="text-emerald-400 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> SELLER: ${stash.seller.toUpperCase()}</span>`;
+            document.getElementById('current-img-idx').innerText = "1"; document.getElementById('total-img-count').innerText = totalImagesCount;
+            slider.style.transform = `translateX(0)`;
+            slider.innerHTML = imagesArray.map(img => `<div class="slide-item w-full flex-shrink-0 flex items-center justify-center bg-black h-full cursor-zoom-in" onclick="openLightbox('${img}')"><img src="${img}" class="w-full h-full object-contain"></div>`).join('');
+            document.getElementById('gallery-nav').style.display = totalImagesCount > 1 ? 'flex' : 'none';
+            gsap.to(modal, { autoAlpha: 1, duration: 0.3 }); 
+            gsap.fromTo(".modal-content", { y: 50, scale: 0.95, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.2)" });
+            lucide.createIcons();
+        }
+        function changeImage(dir) { activeImageIdx += dir; if (activeImageIdx < 0) activeImageIdx = totalImagesCount - 1; if (activeImageIdx >= totalImagesCount) activeImageIdx = 0; document.getElementById('modal-slider').style.transform = `translateX(-${activeImageIdx * 100}%)`; document.getElementById('current-img-idx').innerText = activeImageIdx + 1; }
+        function closeModal() { 
+            const modal = document.getElementById('modal'); 
+            gsap.to(".modal-content", { y: 40, scale: 0.9, opacity: 0, duration: 0.3, ease: "power2.in" }); 
+            gsap.to(modal, { autoAlpha: 0, duration: 0.3 }); 
+        }
+        function openLightbox(src) { const lb = document.getElementById('lightbox'); const lbImg = document.getElementById('lightbox-img'); lbImg.src = src; lb.classList.remove('hidden'); lb.classList.add('flex'); gsap.fromTo(lb, { opacity: 0 }, { opacity: 1, duration: 0.3 }); gsap.fromTo(lbImg, { scale: 0.8 }, { scale: 1, duration: 0.4, ease: "power2.out" }); }
+        function closeLightbox() { const lb = document.getElementById('lightbox'); gsap.to(lb, { opacity: 0, duration: 0.2, onComplete: () => { lb.classList.add('hidden'); lb.classList.remove('flex'); }}); }
+
+        // --- INIT & EVENT LISTENERS ---
+        window.addEventListener('load', () => {
+            initThree();
+            loadStashes();
+            runPreloader();
+            setupCustomDropdown(); // Yeni Dropdown'u başlat
+            setupImagePreviews(); // Resim önizlemeyi başlat
+
+            const activeBtn = document.querySelector('.filter-btn.active');
+            const highlight = document.getElementById('filter-highlight');
+            if(activeBtn && highlight) {
+                highlight.style.left = `${activeBtn.offsetLeft}px`;
+                highlight.style.width = `${activeBtn.offsetWidth}px`;
+            }
+
+            document.getElementById('btn-sell-stash').addEventListener('click', openSellMode);
+            document.getElementById('btn-close-sell').addEventListener('click', closeSellMode);
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target == document.getElementById('modal')) closeModal(); 
+            if (e.target == document.getElementById('sell-overlay')) closeSellMode(); 
         });
     </script>
 </body>
