@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault Admin | Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #050505; color: white; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        input, select, textarea { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; transition: all 0.3s; }
+        input:focus, select:focus, textarea:focus { border-color: #34d399; box-shadow: 0 0 15px rgba(52, 211, 153, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 bg-[url('https://images.unsplash.com/photo-1635322966219-b75ed3a93227?q=80&w=2500&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat bg-fixed">
+    <div class="absolute inset-0 bg-black/80"></div>
+
+    <div class="glass w-full max-w-2xl p-8 rounded-3xl relative z-10">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold tracking-widest flex items-center gap-2">
+                <i data-lucide="shield-alert" class="text-emerald-400"></i> ADMIN PANEL
+            </h1>
+            <a href="/" class="text-xs text-white/50 hover:text-white uppercase tracking-widest">Back to Site</a>
+        </div>
+
+        <form id="stashForm" class="space-y-5">
+            <div>
+                <label class="text-xs font-bold uppercase tracking-widest text-red-400 block mb-2">Admin Password</label>
+                <input type="password" id="adminPass" placeholder="Enter secret key..." required>
+            </div>
+
+            <div class="grid grid-cols-2 gap-5">
+                <div>
+                    <label class="text-[10px] uppercase text-white/40 font-bold block mb-1">Title</label>
+                    <input type="text" id="title" placeholder="Ex: Crystal Chamber" required>
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase text-white/40 font-bold block mb-1">Price</label>
+                    <input type="text" id="price" placeholder="Ex: 500,000 $" required>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-5">
+                <div>
+                    <label class="text-[10px] uppercase text-white/40 font-bold block mb-1">Region</label>
+                    <input type="text" id="region" placeholder="Ex: Ocean Depths" required>
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase text-white/40 font-bold block mb-1">Security Level</label>
+                    <input type="text" id="security" placeholder="Ex: Max (Lvl 5)" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] uppercase text-white/40 font-bold block mb-1">Description</label>
+                <textarea id="description" rows="3" placeholder="Details about the stash..." required></textarea>
+            </div>
+
+            <div>
+                <label class="text-[10px] uppercase text-white/40 font-bold block mb-1">Image URL (Main)</label>
+                <input type="url" id="image" placeholder="https://..." required>
+            </div>
+
+            <div>
+                <label class="text-[10px] uppercase text-white/40 font-bold block mb-1">Seller Type</label>
+                <select id="seller">
+                    <option value="VaultSMP">VaultSMP (Official)</option>
+                    <option value="User">User Listing</option>
+                </select>
+                <input type="text" id="sellerName" placeholder="Enter User Name" class="mt-2 hidden">
+            </div>
+
+            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition duration-300 flex items-center justify-center gap-2 mt-4">
+                <i data-lucide="plus-circle"></i> PUBLISH STASH
+            </button>
+        </form>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        // Kullanıcı seçilirse isim kutusunu aç
+        document.getElementById('seller').addEventListener('change', function() {
+            const input = document.getElementById('sellerName');
+            if(this.value === 'User') {
+                input.classList.remove('hidden');
+                input.required = true;
+            } else {
+                input.classList.add('hidden');
+                input.required = false;
+            }
+        });
+
+        document.getElementById('stashForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Processing...';
+            btn.disabled = true;
+
+            const sellerType = document.getElementById('seller').value;
+            const finalSeller = sellerType === 'VaultSMP' ? 'VaultSMP' : document.getElementById('sellerName').value;
+
+            const data = {
+                password: document.getElementById('adminPass').value,
+                title: document.getElementById('title').value,
+                region: document.getElementById('region').value,
+                price: document.getElementById('price').value,
+                description: document.getElementById('description').value,
+                security: document.getElementById('security').value,
+                seller: finalSeller,
+                image: document.getElementById('image').value
+            };
+
+            try {
+                const res = await fetch('/api/add-stash', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+                
+                if(res.ok) {
+                    alert('✅ İLAN BAŞARIYLA EKLENDİ!');
+                    e.target.reset();
+                } else {
+                    alert('❌ HATA: ' + result.error);
+                }
+            } catch (err) {
+                alert('Bağlantı hatası!');
+            }
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    </script>
+</body>
+</html>
