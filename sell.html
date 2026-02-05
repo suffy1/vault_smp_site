@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell Your Stash | Vault SMP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #050505; color: white; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        input, select, textarea { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; transition: all 0.3s; }
+        input:focus { border-color: #34d399; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 bg-[url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2000')] bg-cover bg-center">
+    <div class="absolute inset-0 bg-black/90"></div>
+
+    <div class="glass w-full max-w-2xl p-8 rounded-3xl relative z-10">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-emerald-400">SELL YOUR STASH</h1>
+            <a href="/" class="text-xs text-white/50 hover:text-white uppercase">Back to Home</a>
+        </div>
+        <p class="text-sm text-white/60 mb-8">Submit your stash details. Our admins will verify the coordinates and list it on the marketplace.</p>
+
+        <form id="sellForm" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" id="seller" placeholder="Your Username (Discord/IGN)" required>
+                <input type="text" id="price" placeholder="Price (e.g. 1,000,000 $)" required>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" id="title" placeholder="Stash Title (e.g. Sky Base)" required>
+                <input type="text" id="region" placeholder="Region (e.g. End Wilds)" required>
+            </div>
+            <input type="text" id="security" placeholder="Security Level (e.g. Obsidian Box, Hidden)" required>
+            <textarea id="description" rows="3" placeholder="Describe the loot and defenses..." required></textarea>
+            
+            <div>
+                <label class="text-[10px] uppercase text-white/40 font-bold block mb-1">Image Links (One per line)</label>
+                <textarea id="images" rows="3" placeholder="https://imgur.com/..." required class="font-mono text-xs"></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition mt-4">
+                SUBMIT FOR REVIEW
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('sellForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.innerHTML = 'Sending...';
+            btn.disabled = true;
+
+            const images = document.getElementById('images').value.split('\n').map(u => u.trim()).filter(u => u);
+            
+            const data = {
+                seller: document.getElementById('seller').value,
+                price: document.getElementById('price').value,
+                title: document.getElementById('title').value,
+                region: document.getElementById('region').value,
+                security: document.getElementById('security').value,
+                description: document.getElementById('description').value,
+                images: images
+            };
+
+            try {
+                const res = await fetch('/api/submit-stash', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if(res.ok) {
+                    alert('✅ Submission Successful! Waiting for Admin Approval.');
+                    e.target.reset();
+                } else {
+                    alert('Error submitting form.');
+                }
+            } catch(err) { alert('Connection Error'); }
+            
+            btn.innerHTML = 'SUBMIT FOR REVIEW';
+            btn.disabled = false;
+        });
+    </script>
+</body>
+</html>
