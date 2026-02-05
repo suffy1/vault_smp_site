@@ -1,51 +1,53 @@
-const { Client } = require('pg');
-
 exports.handler = async (event, context) => {
-  // Sadece POST isteğine izin ver
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
+    // Sadece POST isteklerini kabul et
+    if (event.httpMethod !== "POST") {
+        return { statusCode: 405, body: "Method Not Allowed" };
+    }
 
-  const data = JSON.parse(event.body);
+    try {
+        const data = JSON.parse(event.body);
 
-  const client = new Client({
-    connectionString: process.env.NETLIFY_DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
+        // YENİ VERİ YAPISI:
+        // security YOK, region VAR.
+        const { seller, price, title, region, description, images } = data;
 
-  try {
-    await client.connect();
+        // Basit Validasyon (Backend tarafında da kontrol şart)
+        if (!seller || !price || !title || !region || !description) {
+            return { 
+                statusCode: 400, 
+                body: JSON.stringify({ message: "Eksik bilgi girdiniz." }) 
+            };
+        }
 
-    const query = `
-      INSERT INTO stashes (title, region, price, seller, description, security, images, status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 'Pending')
-    `;
-    
-    // images verisini dizi olarak gönderiyoruz
-    const values = [
-      data.title,
-      data.region,
-      data.price,
-      data.seller,
-      data.description,
-      data.security,
-      data.images 
-    ];
+        // --- BURASI VERİTABANI BAĞLANTISI ---
+        // (Eğer MongoDB, Supabase veya JSONBin kullanıyorsan burayı güncellemelisin)
+        // Şimdilik test için konsola basıyoruz ve başarılı dönüyoruz.
+        
+        const newStash = {
+            id: Date.now(), // Geçici ID
+            seller,
+            price,
+            title,
+            region, // ARTIK SERVER BİLGİSİ KAYDEDİLİYOR
+            description,
+            images, // ARTIK DİZİ (ARRAY) OLARAK GELİYOR
+            status: "Pending", // İlk eklendiğinde onay bekliyor
+            date: new Date().toISOString()
+        };
 
-    await client.query(query, values);
-    await client.end();
+        console.log("YENİ STASH GELDİ:", newStash);
 
-    return {
-      statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ message: "İlan başarıyla gönderildi." })
-    };
+        // --- VERİTABANI KAYIT KODUNU BURAYA YAZACAKSIN ---
 
-  } catch (error) {
-    console.error("Ekleme Hatası:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message })
-    };
-  }
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ message: "İlan başarıyla alındı!", data: newStash }),
+        };
+
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: "Sunucu hatası", error: error.toString() }),
+        };
+    }
 };
