@@ -1,14 +1,22 @@
 [build]
   functions = "netlify/functions"
 
-# Veri Okuma (Mevcut)
 [[redirects]]
   from = "/api/stashes"
   to = "/.netlify/functions/get_stashes"
   status = 200
 
-# Veri Ekleme (YENİ)
 [[redirects]]
-  from = "/api/add-stash"
-  to = "/.netlify/functions/add_stash"
+  from = "/api/submit-stash"
+  to = "/.netlify/functions/submit-stash"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin-get"
+  to = "/.netlify/functions/admin-get"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin-update"
+  to = "/.netlify/functions/admin-update"
   status = 200
