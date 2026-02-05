@@ -8,14 +8,14 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        /* Modern Fontlar: Ana metin Outfit, Teknik yazılar Space Grotesk */
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@300;400;500&display=swap');
+        /* SADECE OUTFIT FONTU (Lüks ve Modern) */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
         
         body { 
             font-family: 'Outfit', sans-serif; 
             background-color: #050505; 
             color: white; 
-            overflow: hidden; /* Scroll tamamen kapatıldı */
+            overflow: hidden; /* Scroll kapalı, tek ekran */
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -32,22 +32,24 @@
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.06);
             color: #fff;
-            padding: 12px 16px; /* Daha kompakt padding */
+            padding: 12px 16px;
             border-radius: 10px;
             width: 100%;
             outline: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 0.85rem;
-            font-family: 'Space Grotesk', sans-serif; /* Yazarken modern teknik font */
+            font-size: 0.9rem;
+            font-family: 'Outfit', sans-serif; /* Font düzeltildi */
+            font-weight: 400;
         }
 
-        /* Placeholder için özel stil */
+        /* Placeholder stili */
         ::placeholder {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-weight: 300;
             letter-spacing: 0.05em;
-            color: rgba(255, 255, 255, 0.25);
-            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.85rem;
+            text-transform: uppercase;
         }
         
         input:focus, textarea:focus {
@@ -81,10 +83,10 @@
 
     <nav class="absolute top-0 w-full px-10 py-8 flex justify-between items-center z-50 pointer-events-none">
         <div class="flex items-center space-x-3 pointer-events-auto">
-            <div class="w-7 h-7 bg-white rounded-sm rotate-45 flex items-center justify-center">
-                <i data-lucide="box" class="text-black w-3.5 h-3.5 -rotate-45"></i>
+            <div class="w-8 h-8 bg-white rounded-sm rotate-45 flex items-center justify-center">
+                <i data-lucide="box" class="text-black w-4 h-4 -rotate-45"></i>
             </div>
-            <span class="text-lg font-bold tracking-tighter uppercase font-['Space_Grotesk']">Vault.smp</span>
+            <span class="text-xl font-bold tracking-tighter uppercase">Vault.smp</span>
         </div>
         <a href="/" class="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white transition pointer-events-auto">
             <span>Showroom</span>
@@ -99,47 +101,47 @@
             <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
             <div class="mb-6 text-center">
-                <h1 class="text-3xl font-bold tracking-tight mb-2 text-white font-['Space_Grotesk']">SUBMIT STASH</h1>
+                <h1 class="text-3xl font-bold tracking-tight mb-2 text-white">SUBMIT STASH</h1>
                 <div class="w-12 h-0.5 bg-emerald-500/50 mx-auto rounded-full"></div>
             </div>
 
-            <form id="sellForm" class="space-y-5">
+            <form id="sellForm" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="group">
                         <label>Identity</label>
-                        <input type="text" id="seller" placeholder="DISCORD / IGN" required>
+                        <input type="text" id="seller" placeholder="Discord / IGN" required>
                     </div>
                     <div class="group">
                         <label>Valuation</label>
-                        <input type="text" id="price" placeholder="PRICE ($)" required>
+                        <input type="text" id="price" placeholder="Price ($)" required>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="group">
                         <label>Title</label>
-                        <input type="text" id="title" placeholder="STASH NAME" required>
+                        <input type="text" id="title" placeholder="Stash Name" required>
                     </div>
                     <div class="group">
                         <label>Region</label>
-                        <input type="text" id="region" placeholder="XYZ / BIOME" required>
+                        <input type="text" id="region" placeholder="XYZ / Biome" required>
                     </div>
                 </div>
 
                 <div class="group">
                     <label>Security & Intel</label>
                     <div class="grid grid-cols-1 gap-3">
-                         <input type="text" id="security" placeholder="SECURITY LEVEL (e.g. OBSIDIAN BOX)" required>
-                         <textarea id="description" rows="3" placeholder="DETAILED MANIFEST & COORDS..." required class="resize-none"></textarea>
+                         <input type="text" id="security" placeholder="Security Level (e.g. Obsidian Box)" required>
+                         <textarea id="description" rows="2" placeholder="Detailed Manifest & Coords..." required class="resize-none"></textarea>
                     </div>
                 </div>
                 
                 <div class="group">
                     <label>Evidence</label>
-                    <input type="text" id="images" placeholder="IMGUR LINKS (Space separated)" required>
+                    <textarea id="images" rows="3" placeholder="Imgur Links (One per line)" required class="resize-none font-mono text-xs"></textarea>
                 </div>
 
-                <button type="submit" class="w-full bg-white hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] mt-2 group overflow-hidden relative font-['Space_Grotesk']">
+                <button type="submit" class="w-full bg-white hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] mt-2 group overflow-hidden relative">
                     <span class="relative z-10">Initialize Upload</span>
                     <i data-lucide="arrow-right" class="w-3.5 h-3.5 relative z-10 group-hover:translate-x-1 transition-transform"></i>
                 </button>
@@ -162,7 +164,7 @@
             });
         });
 
-        // 2. PARTİKÜL SİSTEMİ
+        // 2. PARTİKÜL SİSTEMİ (Değişmedi)
         const canvas = document.getElementById('particle-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -236,9 +238,9 @@
             btn.innerHTML = 'ENCRYPTING...';
             btn.disabled = true;
 
-            // Image input'u boşluklara veya yeni satıra göre böl
+            // Linkleri satır satır veya boşlukla ayır
             const rawImages = document.getElementById('images').value;
-            const images = rawImages.split(/[\s,]+/).filter(u => u); // Virgül veya boşlukla ayır
+            const images = rawImages.split(/[\s,]+/).filter(u => u); 
             
             const data = {
                 seller: document.getElementById('seller').value,
