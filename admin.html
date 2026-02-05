@@ -3,442 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VAULT ADMIN | Control Center</title>
+    <title>Vault Admin | Secure Database</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #050505; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #10b981; }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: #050505;
-            color: #e5e5e5;
-            overflow-x: hidden;
-        }
-
-        /* --- PRELOADER & GLITCH --- */
-        #preloader {
-            position: fixed; inset: 0; background-color: #000; z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
-            padding-left: 10vw; font-family: 'JetBrains Mono', monospace; color: #ffffff;
-            font-size: 1rem; line-height: 1.5; overflow: hidden;
-        }
-        #logs { display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
-        .log-line { opacity: 0; position: relative; display: block; margin-bottom: 5px; white-space: nowrap; }
-        .cursor { display: inline-block; width: 10px; height: 18px; background-color: #ffffff; animation: blink 0.8s infinite; vertical-align: text-bottom; margin-left: 5px; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-        /* GLITCH ANIMATION */
-        .glitch-active .log-line::before, .glitch-active .log-line::after {
-            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; color: #ffffff; opacity: 1; clip-path: inset(100% 0 0 0); overflow: hidden;
-        }
-        .glitch-active .log-line::before { animation: glitch-horizontal-1 3s infinite linear; }
-        .glitch-active .log-line::after { animation: glitch-horizontal-2 2.5s infinite linear reverse; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        @keyframes glitch-horizontal-1 {
-            0%, 80%, 100% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-            81% { clip-path: inset(20% 0 50% 0); transform: translateX(-100px); }
-            82% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-            91% { clip-path: inset(60% 0 35% 0); transform: translateX(-60px); }
-            92% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-        }
-        @keyframes glitch-horizontal-2 {
-            0%, 85%, 100% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-            86% { clip-path: inset(10% 0 80% 0); transform: translateX(120px); }
-            87% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-            95% { clip-path: inset(75% 0 5% 0); transform: translateX(80px); }
-            96% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-        }
-
-        /* --- LAYOUT --- */
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.4; pointer-events: none !important; }
+        body { font-family: 'Inter', sans-serif; background-color: #09090b; color: #e4e4e7; overflow-x: hidden; }
         
-        /* BAŞLANGIÇTA GİZLİ (PRELOADER BİTİNCE AÇILACAK) */
-        .sidebar, .main-content { opacity: 0; }
-
-        .sidebar {
-            width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: #0a0a0a;
-            border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; padding: 2rem; z-index: 50;
-        }
-        .main-content { margin-left: 260px; padding: 2rem 3rem; width: calc(100% - 260px); position: relative; z-index: 10; }
-
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; color: #888; transition: all 0.3s; cursor: pointer; margin-bottom: 5px; }
-        .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-
+        /* LOGIN EKRANI */
+        #login-screen { position: fixed; inset: 0; z-index: 9999; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-box { width: 100%; max-width: 320px; text-align: center; }
+        
+        /* ANA PANEL (Gizli) */
+        #admin-panel { display: none; }
+        
+        /* SIDEBAR & LAYOUT */
+        .sidebar { width: 250px; height: 100vh; position: fixed; left: 0; top: 0; background: #000; border-right: 1px solid #27272a; padding: 24px; display: flex; flex-direction: column; }
+        .main-content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); }
+        
+        /* COMPONENTS */
+        .btn-primary { background: #fff; color: #000; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: 0.2s; cursor: pointer; }
+        .btn-primary:hover { background: #d4d4d8; }
+        
         /* TABLE */
-        .admin-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
-        .admin-table th { text-align: left; padding: 10px 20px; color: #666; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
-        .table-row { background: #0f0f0f; transition: transform 0.2s, background 0.2s; }
-        .table-row:hover { transform: scale(1.01); background: #141414; }
-        .table-row td { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .table-row td:first-child { border-left: 1px solid rgba(255,255,255,0.03); border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
-        .table-row td:last-child { border-right: 1px solid rgba(255,255,255,0.03); border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
-
-        /* STATUS BADGES */
-        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; }
-        .badge-pending { background: rgba(234, 179, 8, 0.15); color: #fbbf24; border: 1px solid rgba(234, 179, 8, 0.2); }
-        .badge-active { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
-        .badge-sold { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { color: #71717a; font-size: 0.75rem; text-transform: uppercase; padding: 12px 16px; border-bottom: 1px solid #27272a; }
+        td { padding: 16px; border-bottom: 1px solid #18181b; color: #d4d4d8; font-size: 0.9rem; }
+        tr:hover td { background: #18181b; }
+        
+        /* FORM ELEMENTS */
+        input, textarea { width: 100%; background: #18181b; border: 1px solid #27272a; color: #fff; padding: 10px 12px; border-radius: 6px; font-size: 0.9rem; outline: none; transition: 0.2s; }
+        input:focus, textarea:focus { border-color: #10b981; }
+        label { display: block; font-size: 0.75rem; color: #71717a; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.05em; }
 
         /* MODAL */
-        .admin-modal { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; }
-        .modal-card { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); width: 600px; max-height: 90vh; overflow-y: auto; border-radius: 24px; padding: 2rem; position: relative; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: #09090b; border: 1px solid #27272a; width: 600px; max-height: 90vh; overflow-y: auto; padding: 32px; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 
-        /* INPUTS */
-        input, textarea { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: #fff; padding: 12px 16px; border-radius: 10px; width: 100%; outline: none; transition: all 0.3s; font-family: 'Outfit', sans-serif; font-size: 0.9rem; }
-        input:focus, textarea:focus { border-color: #10b981; background: rgba(16, 185, 129, 0.05); }
-        label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: #666; margin-bottom: 6px; display: block; font-weight: 700; }
-
-        /* DROPDOWN */
-        .custom-select-wrapper { position: relative; width: 100%; user-select: none; }
-        .custom-select-trigger { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: #fff; padding: 12px 16px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; transition: all 0.3s; }
-        .custom-select-trigger:hover { border-color: #10b981; }
-        .custom-select-trigger::after { content: '▼'; font-size: 0.6rem; margin-left: 10px; transition: transform 0.3s; }
-        .custom-select-wrapper.open .custom-select-trigger::after { transform: rotate(180deg); }
-        .custom-options { position: absolute; top: 110%; left: 0; width: 100%; background: #111; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-10px); transition: all 0.3s ease; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* CUSTOM DROPDOWN */
+        .custom-select-wrapper { position: relative; user-select: none; }
+        .custom-select-trigger { background: #18181b; border: 1px solid #27272a; color: #fff; padding: 10px 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+        .custom-options { position: absolute; top: 105%; left: 0; width: 100%; background: #18181b; border: 1px solid #27272a; border-radius: 6px; overflow: hidden; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-5px); transition: 0.2s; z-index: 50; }
         .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); }
-        .custom-option { padding: 12px 16px; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.02); }
-        .custom-option:hover { background: rgba(16, 185, 129, 0.1); color: #10b981; padding-left: 20px; }
-        .custom-option.selected { color: #10b981; font-weight: bold; }
+        .custom-option { padding: 10px 12px; cursor: pointer; transition: 0.1s; font-size: 0.9rem; }
+        .custom-option:hover { background: #27272a; color: #fff; }
+        .custom-option.selected { color: #10b981; }
 
         /* IMAGE PREVIEW */
-        .image-preview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
-        .preview-thumb { position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
-        .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .preview-remove { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.8); color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; transition: background 0.2s; border: 1px solid rgba(255,255,255,0.2); }
-        .preview-remove:hover { background: #ef4444; border-color: #ef4444; }
+        .preview-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+        .preview-item { position: relative; aspect-ratio: 1; background: #18181b; border-radius: 6px; overflow: hidden; border: 1px solid #27272a; }
+        .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+        .btn-remove-img { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.8); color: #ef4444; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; transition: 0.2s; }
+        .btn-remove-img:hover { background: #ef4444; color: white; }
     </style>
 </head>
 <body>
 
-    <div id="preloader">
-        <div id="logs"></div>
-        <div><span class="cursor"></span></div>
+    <div id="login-screen">
+        <div class="login-box">
+            <div class="flex justify-center mb-6"><i data-lucide="shield-lock" class="w-12 h-12 text-white"></i></div>
+            <h2 class="text-xl font-bold text-white mb-2">Vault Admin Access</h2>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <input type="password" id="admin-pass" placeholder="Database Key" class="text-center">
+                <button type="submit" id="login-btn" class="btn-primary w-full py-3">Login</button>
+            </form>
+            <p id="login-error" class="text-red-500 text-xs mt-4 hidden">Access Denied.</p>
+        </div>
     </div>
 
-    <canvas id="bg-canvas"></canvas>
-
-    <aside class="sidebar">
-        <div class="flex items-center gap-3 mb-10 text-white">
-            <div class="w-8 h-8 bg-emerald-500 rounded flex items-center justify-center">
-                <i data-lucide="shield-check" class="text-black w-5 h-5"></i>
+    <div id="admin-panel">
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 mb-8 px-2">
+                <i data-lucide="database" class="w-5 h-5 text-emerald-500"></i>
+                <span class="font-bold tracking-tight text-white">VAULT DB</span>
             </div>
-            <span class="font-bold text-lg tracking-tight">VAULT ADMIN</span>
-        </div>
+            <div class="flex items-center gap-3 padding-3 text-white/50 text-sm"><i data-lucide="layout-list" class="w-4 h-4"></i> Listings</div>
+            <div class="mt-auto text-red-400 cursor-pointer text-sm" onclick="location.reload()"><i data-lucide="log-out" class="w-4 h-4 inline mr-2"></i> Logout</div>
+        </aside>
 
-        <nav class="space-y-2">
-            <div class="nav-item active"><i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard</div>
-            <div class="nav-item"><i data-lucide="inbox" class="w-5 h-5"></i> Requests <span class="ml-auto bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full">3</span></div>
-            <div class="nav-item"><i data-lucide="users" class="w-5 h-5"></i> Users</div>
-            <div class="nav-item mt-auto text-red-400 hover:text-red-300 hover:bg-red-500/10"><i data-lucide="log-out" class="w-5 h-5"></i> Logout</div>
-        </nav>
-    </aside>
+        <main class="main-content">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-white">Database Listings</h1>
+                <button onclick="openModal()" class="btn-primary flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> Add Official Stash</button>
+            </div>
 
-    <main class="main-content">
-        <header class="flex justify-between items-center mb-10">
-            <div>
-                <h1 class="text-3xl font-bold text-white mb-1">Inventory Management</h1>
-                <p class="text-slate-500 text-sm">Manage active listings and verify requests.</p>
-            </div>
-            <button onclick="openAdminModal()" class="bg-emerald-500 hover:bg-emerald-400 text-black px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition hover:scale-105">
-                <i data-lucide="plus" class="w-4 h-4"></i> NEW LISTING
-            </button>
-        </header>
-
-        <div class="grid grid-cols-4 gap-6 mb-10">
-            <div class="bg-[#0a0a0a] p-6 rounded-2xl border border-white/5">
-                <div class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Total Stashes</div>
-                <div class="text-3xl font-bold text-white">124</div>
-            </div>
-            <div class="bg-[#0a0a0a] p-6 rounded-2xl border border-white/5">
-                <div class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Active Value</div>
-                <div class="text-3xl font-bold text-emerald-400">$4,250</div>
-            </div>
-            <div class="bg-[#0a0a0a] p-6 rounded-2xl border border-white/5">
-                <div class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Pending Review</div>
-                <div class="text-3xl font-bold text-amber-400">3</div>
-            </div>
-        </div>
-
-        <div class="bg-[#0a0a0a] rounded-3xl border border-white/5 p-2 overflow-hidden">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Stash Title</th>
-                        <th>Seller</th>
-                        <th>Region</th>
-                        <th>Price</th>
-                        <th>Status</th>
-                        <th class="text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="inventory-list">
+            <div class="border border-zinc-800 rounded-xl overflow-hidden">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th><th>Seller</th><th>Region</th><th>Price</th><th>Status</th><th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-list">
+                        <tr><td colspan="6" class="text-center py-8 text-zinc-500">Waiting for database connection...</td></tr>
                     </tbody>
-            </table>
-        </div>
-    </main>
+                </table>
+            </div>
+        </main>
+    </div>
 
-    <div id="adminModal" class="admin-modal">
-        <div class="modal-card">
-            <button onclick="closeAdminModal()" class="absolute top-6 right-6 text-slate-500 hover:text-white transition">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-white">New Database Entry</h2>
+                <button onclick="closeModal()" class="text-zinc-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
 
-            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <i data-lucide="database" class="text-emerald-500"></i> <span id="modal-header-text">ADD NEW STASH</span>
-            </h2>
-
-            <form id="adminForm" class="space-y-5">
+            <form id="adminForm" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label>Identity (Seller)</label><input type="text" id="seller" placeholder="e.g. VaultSMP" required></div>
-                    <div><label>Price</label><input type="text" id="price" placeholder="e.g. $150" required></div>
+                    <div><label>Seller</label><input type="text" id="seller" value="VaultSMP" required></div>
+                    <div><label>Price</label><input type="text" id="price" placeholder="$..." required></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label>Title</label><input type="text" id="title" placeholder="Stash Name" required></div>
+                    <div><label>Title</label><input type="text" id="title" required></div>
                     <div>
-                        <label>Region (Server)</label>
+                        <label>Server Region</label>
                         <div class="custom-select-wrapper">
-                            <div class="custom-select-trigger"><span>Select Server...</span></div>
+                            <div class="custom-select-trigger"><span>Select...</span> <i data-lucide="chevron-down" class="w-4 h-4"></i></div>
                             <div class="custom-options">
-                                <span class="custom-option" data-value="NA West">NA West</span>
-                                <span class="custom-option" data-value="NA East">NA East</span>
-                                <span class="custom-option" data-value="EU Central">EU Central</span>
-                                <span class="custom-option" data-value="EU East">EU East</span>
-                                <span class="custom-option" data-value="Asia">Asia</span>
-                                <span class="custom-option" data-value="Oceania">Oceania</span>
+                                <div class="custom-option" data-value="NA West">NA West</div>
+                                <div class="custom-option" data-value="NA East">NA East</div>
+                                <div class="custom-option" data-value="EU Central">EU Central</div>
+                                <div class="custom-option" data-value="EU East">EU East</div>
+                                <div class="custom-option" data-value="Asia">Asia</div>
+                                <div class="custom-option" data-value="Oceania">Oceania</div>
                             </div>
-                            <input type="hidden" id="region" name="region" required>
+                            <input type="hidden" id="region" required>
                         </div>
                     </div>
                 </div>
-                <div><label>Description</label><textarea id="description" rows="3" placeholder="Full details..." required></textarea></div>
+                <div><label>Description</label><textarea id="description" rows="3" required></textarea></div>
                 <div>
                     <label>Images (Imgur Links)</label>
-                    <textarea id="images" rows="3" placeholder="Paste links here..." class="font-mono text-xs text-emerald-400/80 mb-2"></textarea>
-                    <div id="admin-preview-container" class="image-preview-grid bg-white/5 p-2 rounded-xl min-h-[50px]">
-                        <span class="text-xs text-white/20 col-span-4 text-center py-2">No images loaded</span>
-                    </div>
+                    <textarea id="images" rows="2" class="font-mono text-xs text-emerald-500/80"></textarea>
+                    <div id="preview-area" class="preview-grid"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-4 pt-4">
-                    <button type="button" onclick="closeAdminModal()" class="bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition">Cancel</button>
-                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-black py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition">Save To Database</button>
-                </div>
+                <button type="submit" class="btn-primary w-full py-3 mt-4">Save to Database</button>
             </form>
         </div>
     </div>
 
     <script>
-        // --- PRELOADER SYSTEM (GÜNCEL) ---
-        function runPreloader() {
-            const logs = [
-                "> INITIALIZING ADMIN PROTOCOLS...",
-                "> VERIFYING ROOT ACCESS...",
-                "> DECRYPTING INVENTORY DATA...",
-                "> CONNECTION SECURE.",
-                "> ACCESS GRANTED"
-            ];
-            const logContainer = document.getElementById('logs');
-            const preloader = document.getElementById('preloader');
-            let delay = 0;
+        // --- 1. LOGIN & FETCH ---
+        async function handleLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('admin-pass').value;
+            const btn = document.getElementById('login-btn');
+            const error = document.getElementById('login-error');
 
-            logs.forEach((log, index) => {
-                setTimeout(() => {
-                    const p = document.createElement('div');
-                    p.className = 'log-line';
-                    p.innerText = log;
-                    p.setAttribute('data-text', log);
-                    logContainer.appendChild(p);
-                    gsap.to(p, { opacity: 1, duration: 0.1 });
+            btn.innerHTML = "Checking...";
+            btn.disabled = true;
 
-                    if (index === logs.length - 1) {
-                        setTimeout(() => {
-                            preloader.classList.add('glitch-active');
-                            setTimeout(() => {
-                                gsap.to(preloader, {
-                                    opacity: 0,
-                                    duration: 0.5,
-                                    onComplete: () => {
-                                        preloader.remove(); // DOM'dan silinir, tıklama açılır
-                                        gsap.to([".sidebar", ".main-content"], { opacity: 1, duration: 1 });
-                                    }
-                                });
-                            }, 800);
-                        }, 200);
-                    }
-                }, delay);
-                delay += 400;
-            });
-        }
-
-        // --- BACKGROUND THREE.JS ---
-        function initThree() {
-            const canvas = document.getElementById('bg-canvas');
-            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 5;
-            
-            const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-            const material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-            const cubes = [];
-
-            for (let i = 0; i < 30; i++) {
-                const cube = new THREE.Mesh(geometry, material);
-                cube.position.set((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15, (Math.random() - 0.5) * 10);
-                scene.add(cube);
-                cubes.push(cube);
-            }
-
-            let mouseX = 0, mouseY = 0;
-            window.addEventListener('mousemove', (e) => {
-                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-            });
-
-            function animate() {
-                requestAnimationFrame(animate);
-                cubes.forEach((cube) => {
-                    cube.rotation.x += 0.001;
-                    cube.rotation.y += 0.001;
-                    cube.position.x += (mouseX * 0.5 - cube.position.x) * 0.01;
-                    cube.position.y += (mouseY * 0.5 - cube.position.y) * 0.01;
+            try {
+                // NETLIFY FUNCTION'A SORUYORUZ
+                const res = await fetch('/api/admin-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pass })
                 });
-                renderer.render(scene, camera);
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    // Giriş Başarılı
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'block';
+                    loadDatabase(); // Verileri Çek
+                } else {
+                    // Hatalı Şifre
+                    error.classList.remove('hidden');
+                    error.innerText = "Invalid Password.";
+                    btn.innerHTML = "Login";
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                error.classList.remove('hidden');
+                error.innerText = "Server connection error.";
+                btn.innerHTML = "Login";
+                btn.disabled = false;
             }
-            animate();
-            window.addEventListener('resize', () => {
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-            });
         }
 
-        // --- INVENTORY LOGIC ---
-        const inventory = [
-            { id: 101, title: "Obsidian Skybase", seller: "VaultSMP", region: "NA West", price: "$250", status: "Active" },
-            { id: 102, title: "Underwater Bunker", seller: "User_X", region: "EU Central", price: "$90", status: "Pending" },
-            { id: 103, title: "End Void Stash", seller: "PvPGod", region: "Asia", price: "$500", status: "Sold" },
-        ];
-
-        function renderInventory() {
+        // --- 2. LOAD DATA FROM DB ---
+        async function loadDatabase() {
             const list = document.getElementById('inventory-list');
-            list.innerHTML = inventory.map(item => `
-                <tr class="table-row">
-                    <td>
-                        <div class="font-bold text-white">${item.title}</div>
-                        <div class="text-[10px] text-slate-500 uppercase tracking-widest">ID: #${item.id}</div>
-                    </td>
-                    <td>
-                        <div class="flex items-center gap-2">
-                            ${item.seller === 'VaultSMP' ? '<i data-lucide="badge-check" class="w-4 h-4 text-blue-400 fill-blue-400/20"></i>' : '<i data-lucide="user" class="w-4 h-4 text-slate-500"></i>'}
-                            <span class="text-sm text-slate-300">${item.seller}</span>
-                        </div>
-                    </td>
-                    <td><span class="text-xs font-bold text-slate-400 bg-white/5 px-2 py-1 rounded border border-white/5">${item.region}</span></td>
-                    <td class="font-mono text-emerald-400">${item.price}</td>
-                    <td><span class="badge ${item.status === 'Active' ? 'badge-active' : item.status === 'Pending' ? 'badge-pending' : 'badge-sold'}">${item.status}</span></td>
-                    <td class="text-right">
-                        <button class="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                        <button class="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-            lucide.createIcons();
-        }
+            try {
+                // Burada senin veritabanından veri çeken fonksiyonunu çağırıyoruz
+                const res = await fetch('/api/stashes'); 
+                const data = await res.json();
 
-        // --- MODAL & FORM LOGIC ---
-        function openAdminModal() {
-            const modal = document.getElementById('adminModal');
-            // GSAP ile autoAlpha (visibility + opacity) kontrolü
-            gsap.to(modal, { autoAlpha: 1, duration: 0.3 });
-            gsap.fromTo(".modal-card", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 });
-        }
-
-        function closeAdminModal() {
-            const modal = document.getElementById('adminModal');
-            gsap.to(".modal-card", { y: 20, opacity: 0, duration: 0.2 });
-            gsap.to(modal, { autoAlpha: 0, duration: 0.2 });
-        }
-
-        function setupCustomDropdown() {
-            const wrapper = document.querySelector('.custom-select-wrapper');
-            const trigger = wrapper.querySelector('.custom-select-trigger');
-            const options = wrapper.querySelectorAll('.custom-option');
-            const hiddenInput = document.getElementById('region');
-
-            trigger.addEventListener('click', () => wrapper.classList.toggle('open'));
-
-            options.forEach(option => {
-                option.addEventListener('click', () => {
-                    options.forEach(opt => opt.classList.remove('selected'));
-                    option.classList.add('selected');
-                    trigger.querySelector('span').textContent = option.textContent;
-                    trigger.style.borderColor = '#10b981';
-                    hiddenInput.value = option.getAttribute('data-value');
-                    wrapper.classList.remove('open');
-                });
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!wrapper.contains(e.target)) wrapper.classList.remove('open');
-            });
-        }
-
-        function setupImagePreviews() {
-            const input = document.getElementById('images');
-            const container = document.getElementById('admin-preview-container');
-
-            input.addEventListener('input', updatePreviews);
-
-            function updatePreviews() {
-                const urls = input.value.split('\n').filter(url => url.trim() !== '');
-                
-                if (urls.length === 0) {
-                    container.innerHTML = '<span class="text-xs text-white/20 col-span-4 text-center py-2">No images loaded</span>';
+                if (data.length === 0) {
+                    list.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-zinc-500">Database is empty.</td></tr>';
                     return;
                 }
-                container.innerHTML = ''; 
-                urls.forEach((url, index) => {
-                    const thumb = document.createElement('div');
-                    thumb.className = 'preview-thumb';
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.onerror = () => { img.src = 'https://via.placeholder.com/100?text=Error'; };
-                    const removeBtn = document.createElement('div');
-                    removeBtn.className = 'preview-remove';
-                    removeBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i>';
-                    removeBtn.onclick = () => {
-                        const currentUrls = input.value.split('\n');
-                        currentUrls.splice(index, 1);
-                        input.value = currentUrls.join('\n');
-                        updatePreviews();
-                    };
-                    thumb.appendChild(img);
-                    thumb.appendChild(removeBtn);
-                    container.appendChild(thumb);
-                });
+
+                list.innerHTML = data.map(item => `
+                    <tr class="border-b border-zinc-800 last:border-0">
+                        <td class="font-medium text-white">${item.title}</td>
+                        <td class="text-zinc-400">${item.seller}</td>
+                        <td><span class="bg-zinc-800 text-zinc-300 px-2 py-1 rounded text-xs border border-zinc-700">${item.region || 'Unknown'}</span></td>
+                        <td class="font-mono text-emerald-400">${item.price}</td>
+                        <td>
+                            <div class="flex items-center text-xs font-medium ${getStatusColor(item.status)}">
+                                <span class="status-dot ${getDotColor(item.status)}"></span>
+                                ${item.status}
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <button class="p-2 hover:text-white text-zinc-500 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
                 lucide.createIcons();
+            } catch (err) {
+                list.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-500">Failed to load data.</td></tr>';
             }
         }
 
-        // --- INIT ---
-        window.addEventListener('load', () => {
-            initThree();
-            runPreloader(); // BU ÇOK ÖNEMLİ, YOKSA SAYFA AÇILMAZ
-            renderInventory();
-            setupCustomDropdown();
-            setupImagePreviews();
-            lucide.createIcons();
+        function getStatusColor(status) {
+            if (status === 'Active' || status === 'Available') return 'text-green-400';
+            if (status === 'Pending') return 'text-yellow-400';
+            return 'text-red-400';
+        }
+        function getDotColor(status) {
+            if (status === 'Active' || status === 'Available') return 'bg-green-500';
+            if (status === 'Pending') return 'bg-yellow-500';
+            return 'bg-red-500';
+        }
+
+        // --- 3. SUBMIT NEW STASH (ADMIN) ---
+        document.getElementById('adminForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerText = "Saving...";
+            
+            // Verileri topla
+            const rawImages = document.getElementById('images').value;
+            const images = rawImages.split('\n').map(u => u.trim()).filter(u => u);
+            
+            const postData = {
+                seller: document.getElementById('seller').value,
+                price: document.getElementById('price').value,
+                title: document.getElementById('title').value,
+                region: document.getElementById('region').value,
+                description: document.getElementById('description').value,
+                images: images,
+                status: 'Available' // Admin eklediği için direkt yayında
+            };
+
+            try {
+                // ADMIN ADD ENDPOINT (bunu netlify/functions altında oluşturmalısın)
+                const res = await fetch('/api/admin-add-official', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(postData)
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    loadDatabase(); // Listeyi yenile
+                    e.target.reset();
+                    document.getElementById('preview-area').innerHTML = '';
+                } else {
+                    alert("Error saving stash.");
+                }
+            } catch (err) {
+                alert("Connection failed.");
+            } finally {
+                btn.innerText = originalText;
+            }
         });
+
+        // --- 4. UI LOGIC (Dropdown & Images) ---
+        const dropdownWrapper = document.querySelector('.custom-select-wrapper');
+        const dropdownTrigger = document.querySelector('.custom-select-trigger');
+        const dropdownOptions = document.querySelectorAll('.custom-option');
+        const dropdownInput = document.getElementById('region');
+
+        dropdownTrigger.addEventListener('click', () => dropdownWrapper.classList.toggle('open'));
+        dropdownOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                dropdownTrigger.querySelector('span').innerText = option.innerText;
+                dropdownInput.value = option.getAttribute('data-value');
+                dropdownWrapper.classList.remove('open');
+                dropdownOptions.forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+            });
+        });
+
+        const imgInput = document.getElementById('images');
+        const previewArea = document.getElementById('preview-area');
+        imgInput.addEventListener('input', updatePreviews);
+
+        function updatePreviews() {
+            const urls = imgInput.value.split('\n').filter(url => url.trim() !== '');
+            previewArea.innerHTML = '';
+            urls.forEach((url, index) => {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                div.innerHTML = `<img src="${url}" onerror="this.style.display='none'"><div class="btn-remove-img" onclick="removeImage(${index})">✕</div>`;
+                previewArea.appendChild(div);
+            });
+        }
+
+        window.removeImage = function(index) {
+            const urls = imgInput.value.split('\n');
+            urls.splice(index, 1);
+            imgInput.value = urls.join('\n');
+            updatePreviews();
+        }
+
+        function openModal() { document.getElementById('modal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        lucide.createIcons();
     </script>
 </body>
 </html>
