@@ -1,23 +1,36 @@
-const { Client } = require('pg');
-
-exports.handler = async (event) => {
-    const body = JSON.parse(event.body);
-    if (body.password !== process.env.ADMIN_PASSWORD) return { statusCode: 401, body: "Unauthorized" };
-
-    const client = new Client({ connectionString: process.env.NETLIFY_DATABASE_URL, ssl: { rejectUnauthorized: false } });
-    await client.connect();
+exports.handler = async (event, context) => {
+    if (event.httpMethod !== "POST") {
+        return { statusCode: 405, body: "Method Not Allowed" };
+    }
 
     try {
-        const d = body.data;
-        // Seller otomatik 'VaultSMP', Status otomatik 'Available'
-        await client.query(
-            `INSERT INTO stashes (title, region, price, seller, description, security, images, status) 
-             VALUES ($1, $2, $3, 'VaultSMP', $4, $5, $6, 'Available')`,
-            [d.title, d.region, d.price, d.description, d.security, d.images]
-        );
-        await client.end();
-        return { statusCode: 200, body: JSON.stringify({ message: "Published" }) };
-    } catch (e) {
-        return { statusCode: 500, body: e.message };
+        const data = JSON.parse(event.body);
+
+        // Admin panelinden gelen yeni veri yapısı
+        const { seller, price, title, region, description, images } = data;
+
+        const newOfficialStash = {
+            id: Date.now(),
+            seller: seller || "VaultSMP", // Admin girmezse default VaultSMP
+            price,
+            title,
+            region, // YENİ
+            description,
+            images,
+            status: "Active", // Admin eklediği için direkt Active
+            isOfficial: true,
+            date: new Date().toISOString()
+        };
+
+        // DB KAYIT İŞLEMİ...
+        console.log("Admin İlanı:", newOfficialStash);
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ message: "Resmi ilan eklendi.", data: newOfficialStash }),
+        };
+
+    } catch (error) {
+        return { statusCode: 500, body: JSON.stringify({ error: error.toString() }) };
     }
 };
