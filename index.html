@@ -28,7 +28,7 @@
             position: fixed;
             top: 0;
             left: 0;
-            z-index: 0; /* En arkada */
+            z-index: 0;
             opacity: 0.4;
             pointer-events: none;
         }
@@ -39,24 +39,23 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* SELL FORM OVERLAY (Başlangıçta gizli) */
+        /* SELL FORM OVERLAY */
         #sell-overlay {
             position: fixed;
             inset: 0;
             z-index: 100;
-            display: none; /* JS ile açacağız */
+            display: none;
             align-items: center;
             justify-content: center;
-            background: rgba(0,0,0,0.6); /* Arkaplanı biraz karart */
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.4); /* Arkaplanı çok hafif karart */
         }
 
         /* FORM STYLES */
         .sell-glass {
-            background: rgba(10, 10, 10, 0.85);
+            background: rgba(10, 10, 10, 0.9);
             backdrop-filter: blur(40px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 100px rgba(0,0,0,1);
+            box-shadow: 0 0 100px rgba(0,0,0,0.8);
         }
 
         input, textarea {
@@ -114,7 +113,7 @@
         </div>
     </nav>
 
-    <div id="main-content" class="transition-all duration-700">
+    <div id="main-content" class="transition-all duration-700 origin-center">
         
         <section class="min-h-screen flex flex-col justify-center items-center px-6 pt-20 relative z-10">
             <div class="max-w-4xl text-center">
@@ -127,7 +126,6 @@
                     Curated collection of high-security coordinates and assets on Donut SMP. 
                     Everything from subterranean bunkers to void-level skybases.
                 </p>
-                
                 <div id="scroll-arrow" class="mt-16 opacity-0 translate-y-4 flex justify-center">
                     <button onclick="smoothScroll(event, '#showroom')" class="text-white/30 hover:text-white transition-colors duration-300 animate-bounce">
                         <i data-lucide="chevrons-down" class="w-10 h-10"></i>
@@ -140,7 +138,6 @@
             <div class="flex flex-col md:flex-row justify-between items-center mb-20 gap-8">
                 <h2 class="text-sm font-bold uppercase tracking-widest opacity-40 whitespace-nowrap">Active Listings</h2>
                 <div class="h-px bg-white/10 flex-grow hidden md:block"></div>
-                
                 <div class="relative flex bg-white/5 p-1 rounded-full border border-white/10" id="filter-wrapper">
                     <div id="filter-highlight" class="absolute bg-white rounded-full transition-all duration-300 ease-in-out z-0" style="top: 4px; bottom: 4px; left: 4px; width: 0;"></div>
                     <button onclick="filterItems('All', this)" class="filter-btn active relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition">All</button>
@@ -148,7 +145,6 @@
                     <button onclick="filterItems('Sold', this)" class="filter-btn relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition">Sold</button>
                 </div>
             </div>
-
             <div id="stash-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                  <p class="text-white/30 text-center col-span-full">Loading catalogue...</p>
             </div>
@@ -160,7 +156,7 @@
                 <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-500 mb-4 block">Secure Protocol</span>
                 <h2 class="text-4xl md:text-5xl font-bold tracking-tight">PURCHASE PROCESS</h2>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="glass rounded-[2.5rem] p-10 relative overflow-hidden group">
                     <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition"><i data-lucide="badge-check" class="w-32 h-32"></i></div>
                     <div class="flex items-center space-x-3 mb-6"><i data-lucide="shield-check" class="text-amber-400 w-6 h-6"></i><h3 class="text-xl font-bold text-amber-400 tracking-wide">OFFICIAL VAULT LISTING</h3></div>
@@ -271,10 +267,10 @@
     <div id="lightbox" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl hidden flex-col items-center justify-center p-4 cursor-zoom-out" onclick="closeLightbox()"><button class="absolute top-6 right-6 text-white/50 hover:text-white transition"><i data-lucide="x" class="w-8 h-8"></i></button><img id="lightbox-img" src="" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl shadow-emerald-500/10 scale-95 transition-transform duration-300"><p class="text-white/30 text-xs mt-4 uppercase tracking-widest">Click anywhere to close</p></div>
 
     <script>
-        // --- THREE.JS LOGIC WITH EXPLOSION ---
+        // --- THREE.JS LOGIC (SYNCHRONIZED) ---
         let cubes = [];
         let initialPositions = [];
-        let isExploded = false; // Küpler dışarıda mı?
+        let isSellModeActive = false; // Mouse kontrolünü durdurmak için flag
 
         function initThree() {
             const canvas = document.getElementById('bg-canvas');
@@ -308,24 +304,14 @@
 
             function animate() {
                 requestAnimationFrame(animate);
+                
+                // Eğer satış modu açıksa (Patlamışsa), mouse takibini devre dışı bırak
+                // Sadece kendi ekseninde dönmeye devam etsin
                 cubes.forEach((cube, i) => {
                     cube.rotation.x += 0.001;
                     cube.rotation.y += 0.001;
-                    
-                    if (isExploded) {
-                        // PATLAMA MODU: Merkezden dışarı it
-                        // Eğer x pozitifse daha sağa, negatifse daha sola git
-                        const pushDirX = initialPositions[i].x > 0 ? 1 : -1;
-                        const pushDirY = initialPositions[i].y > 0 ? 1 : -1;
-                        
-                        // Hedef: Orijinal konumun 3 katı uzağı
-                        const targetX = initialPositions[i].x + (pushDirX * 20); 
-                        const targetY = initialPositions[i].y + (pushDirY * 20);
 
-                        cube.position.x += (targetX - cube.position.x) * 0.05;
-                        cube.position.y += (targetY - cube.position.y) * 0.05;
-                        cube.rotation.z += 0.05; // Hızlı dönme efekti
-                    } else {
+                    if (!isSellModeActive) {
                         // NORMAL MOD: Mouse takibi
                         const targetX = initialPositions[i].x + (mouseX * 2); 
                         const targetY = initialPositions[i].y - (mouseY * 2);
@@ -337,7 +323,6 @@
             }
             animate();
             
-            // Resize handler
             window.addEventListener('resize', () => {
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 camera.aspect = window.innerWidth / window.innerHeight;
@@ -345,58 +330,95 @@
             });
         }
 
-        // --- SELL MODE TRANSITION LOGIC ---
+        // --- SYNCHRONIZED TRANSITION LOGIC ---
         function openSellMode() {
-            isExploded = true; // Küpleri patlat
+            isSellModeActive = true; // Mouse takibini durdur, kontrolü GSAP'a ver
             
-            // 1. Ana İçeriği Gizle (Opacity ve Blur ile)
-            gsap.to("#main-content", {
-                duration: 0.8,
+            // GSAP Timeline ile her şeyi senkronize et
+            const tl = gsap.timeline();
+
+            // 1. Yazılar HIZLA kaybolsun (0.5s)
+            tl.to("#main-content", {
+                duration: 0.5,
                 opacity: 0,
                 scale: 0.95,
                 filter: "blur(10px)",
                 pointerEvents: "none",
                 ease: "power2.inOut"
+            }, "start");
+
+            // 2. Küpler AYNI ANDA patlasın (0.8s)
+            cubes.forEach((cube, i) => {
+                const pushDirX = initialPositions[i].x > 0 ? 1 : -1;
+                const pushDirY = initialPositions[i].y > 0 ? 1 : -1;
+                const targetX = initialPositions[i].x + (pushDirX * 25); // Daha uzağa fırlat
+                const targetY = initialPositions[i].y + (pushDirY * 25);
+                
+                // Timeline'a ekle ("start" etiketiyle aynı anda başlasın)
+                tl.to(cube.position, {
+                    x: targetX,
+                    y: targetY,
+                    duration: 0.8,
+                    ease: "power3.inOut" // Patlama hissi için hızlı çıkış
+                }, "start");
+                
+                // Dönüşü de hızlandır
+                tl.to(cube.rotation, {
+                    z: "+=2", // 2 radyan döndür
+                    duration: 0.8,
+                    ease: "power1.out"
+                }, "start");
             });
 
-            // 2. Overlay'i Göster
+            // 3. Form Gelsin (Biraz gecikmeli)
             const overlay = document.getElementById('sell-overlay');
             overlay.style.display = 'flex';
             
-            // 3. Formu Animasyonla Getir
             gsap.fromTo("#sell-form-card", 
                 { opacity: 0, y: 50, scale: 0.9 },
-                { opacity: 1, y: 0, scale: 1, duration: 1, delay: 0.3, ease: "expo.out" }
+                { opacity: 1, y: 0, scale: 1, duration: 0.8, delay: 0.2, ease: "expo.out" }
             );
         }
 
         function closeSellMode() {
-            isExploded = false; // Küpleri geri çağır
-            
-            // 1. Formu Gizle
+            // Formu Gizle
             gsap.to("#sell-form-card", {
                 opacity: 0,
                 y: 50,
-                duration: 0.5,
+                duration: 0.4,
                 ease: "power2.in",
                 onComplete: () => {
                     document.getElementById('sell-overlay').style.display = 'none';
                 }
             });
 
-            // 2. Ana İçeriği Geri Getir
-            gsap.to("#main-content", {
-                duration: 1,
+            const tl = gsap.timeline({
+                onComplete: () => { isSellModeActive = false; } // Animasyon bitince mouse kontrolünü geri ver
+            });
+
+            // Yazılar Geri Gelsin
+            tl.to("#main-content", {
+                duration: 0.8,
                 opacity: 1,
                 scale: 1,
                 filter: "blur(0px)",
                 pointerEvents: "auto",
-                delay: 0.3,
                 ease: "power2.out"
+            }, "return");
+
+            // Küpler Geri Gelsin (Aynı anda)
+            cubes.forEach((cube, i) => {
+                tl.to(cube.position, {
+                    x: initialPositions[i].x, // Başlangıç pozisyonuna dön
+                    y: initialPositions[i].y,
+                    z: initialPositions[i].z,
+                    duration: 1.2, // Biraz daha yavaş ve sakince dönsünler
+                    ease: "power4.out" // Yumuşak iniş
+                }, "return");
             });
         }
 
-        // --- FORM SUBMIT LOGIC (Aynı Mantık) ---
+        // --- FORM SUBMIT LOGIC ---
         document.getElementById('sellForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
@@ -433,7 +455,7 @@
                         btn.classList.replace('text-white', 'text-black'); 
                         btn.innerHTML = originalText; 
                         btn.disabled = false;
-                        closeSellMode(); // Başarılı olunca kapat
+                        closeSellMode();
                     }, 2000);
                 } else {
                     alert('Error');
@@ -535,7 +557,7 @@
         };
         window.onclick = (e) => { 
             if (e.target == document.getElementById('modal')) closeModal(); 
-            if (e.target == document.getElementById('sell-overlay')) closeSellMode(); // Overlay boşluğa tıklayınca kapat
+            if (e.target == document.getElementById('sell-overlay')) closeSellMode(); 
         }
     </script>
 </body>
