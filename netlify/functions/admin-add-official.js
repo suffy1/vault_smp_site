@@ -1,36 +1,34 @@
-exports.handler = async (event, context) => {
-    if (event.httpMethod !== "POST") {
-        return { statusCode: 405, body: "Method Not Allowed" };
-    }
+const { Client } = require('pg');
 
+exports.handler = async (event) => {
+    if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
+    
+    const client = new Client({ connectionString: process.env.DATABASE_URL });
+    
     try {
-        const data = JSON.parse(event.body);
+        await client.connect();
+        
+        // Frontend'den gelen veriyi al
+        const { seller, price, title, region, description, images } = JSON.parse(event.body);
+        
+        // Resim dizisini (Array) JSON string'e çevirip kaydediyoruz ki veritabanı bozulmasın
+        const imagesJson = JSON.stringify(images);
 
-        // Admin panelinden gelen yeni veri yapısı
-        const { seller, price, title, region, description, images } = data;
+        // SQL Sorgusu: Security yerine region eklendi
+        const query = `
+            INSERT INTO stashes (seller, price, title, region, description, images, status, date)
+            VALUES ($1, $2, $3, $4, $5, $6, 'Active', NOW())
+            RETURNING *;
+        `;
+        
+        const values = [seller, price, title, region, description, imagesJson];
+        
+        await client.query(query, values);
+        await client.end();
 
-        const newOfficialStash = {
-            id: Date.now(),
-            seller: seller || "VaultSMP", // Admin girmezse default VaultSMP
-            price,
-            title,
-            region, // YENİ
-            description,
-            images,
-            status: "Active", // Admin eklediği için direkt Active
-            isOfficial: true,
-            date: new Date().toISOString()
-        };
-
-        // DB KAYIT İŞLEMİ...
-        console.log("Admin İlanı:", newOfficialStash);
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ message: "Resmi ilan eklendi.", data: newOfficialStash }),
-        };
-
-    } catch (error) {
-        return { statusCode: 500, body: JSON.stringify({ error: error.toString() }) };
+        return { statusCode: 200, body: JSON.stringify({ message: 'Success' }) };
+    } catch (e) {
+        await client.end();
+        return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
     }
 };
