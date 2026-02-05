@@ -30,7 +30,7 @@
             left: 0;
             z-index: -1;
             opacity: 0.35;
-            pointer-events: none; /* Mouse etkileşimini engellemesin */
+            pointer-events: none;
         }
 
         .glass {
@@ -72,11 +72,11 @@
         
         /* Satıcı Badge Stilleri */
         .seller-badge-official {
-            color: #fbbf24; /* Amber-400 */
+            color: #fbbf24; 
             text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
         }
         .seller-badge-user {
-            color: #34d399; /* Emerald-400 */
+            color: #34d399; 
         }
     </style>
 </head>
@@ -92,9 +92,10 @@
             <span class="text-xl font-bold tracking-tighter uppercase">Vault.smp</span>
         </div>
         <div class="flex items-center space-x-8 text-xs font-semibold uppercase tracking-widest opacity-60">
+            <a href="/sell.html" class="text-emerald-400 hover:text-emerald-300 transition font-bold">SELL STASH</a>
             <a href="#how-it-works" onclick="smoothScroll(event, '#how-it-works')" class="hover:opacity-100 transition">How it Works?</a>
             <a href="#showroom" onclick="smoothScroll(event, '#showroom')" class="hover:opacity-100 transition">Catalogue</a>
-            <a href="https://discord.gg/PC5UAbZ6Wf" target="_blank" class="bg-white text-black px-6 py-2 rounded-full hover:scale-105 transition duration-300">Contact Admin</a>
+            <a href="https://discord.gg/yourlink" target="_blank" class="bg-white text-black px-6 py-2 rounded-full hover:scale-105 transition duration-300">Contact Admin</a>
         </div>
     </nav>
 
@@ -243,7 +244,7 @@
                     </div>
                 </div>
                 <div class="mt-auto">
-                    <a id="contact-btn" href="https://discord.gg/PC5UAbZ6Wf" target="_blank" class="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-transform active:scale-95">
+                    <a id="contact-btn" href="https://discord.gg/yourlink" target="_blank" class="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-transform active:scale-95">
                         <i data-lucide="message-square" class="w-4 h-4"></i>
                         <span class="uppercase text-xs tracking-widest">Contact to Buy</span>
                     </a>
@@ -266,25 +267,22 @@
         let activeImageIdx = 0;
         let totalImagesCount = 0;
 
-        // Veriyi Veritabanından (API'den) Çeken Fonksiyon
-async function loadStashes() {
-    try {
-        // ARTIK JSON DOSYASI DEĞİL, API ÇAĞIRIYORUZ
-        const response = await fetch('/api/stashes'); 
-        
-        if (!response.ok) throw new Error("Veritabanına bağlanılamadı");
-        STASH_DATA = await response.json();
-        renderStashes();
-    } catch (error) {
-        console.error("Veri yüklenirken hata:", error);
-        document.getElementById('stash-grid').innerHTML = `
-            <div class="col-span-full text-center p-10 bg-red-500/10 rounded-2xl border border-red-500/20">
-                <p class="text-red-400 font-bold mb-2">Veri Tabanı Bağlantı Hatası</p>
-                <p class="text-xs text-red-300/60">Netlify Edge Function çalışmadı veya veritabanı ayarları eksik.</p>
-            </div>
-        `;
-    }
-}
+        async function loadStashes() {
+            try {
+                // VERİTABANINDAN ÇEKME (API)
+                const response = await fetch('/api/stashes');
+                if (!response.ok) throw new Error("Veritabanı hatası");
+                STASH_DATA = await response.json();
+                renderStashes();
+            } catch (error) {
+                console.error("Veri yüklenirken hata:", error);
+                document.getElementById('stash-grid').innerHTML = `
+                    <div class="col-span-full text-center p-10 bg-red-500/10 rounded-2xl border border-red-500/20">
+                        <p class="text-red-400 font-bold mb-2">Veri Yüklenemedi</p>
+                        <p class="text-xs text-red-300/60">Veritabanı bağlantısı bekleniyor...</p>
+                    </div>`;
+            }
+        }
 
         function smoothScroll(e, target) {
             e.preventDefault();
@@ -309,12 +307,21 @@ async function loadStashes() {
             const grid = document.getElementById('stash-grid');
             if (!STASH_DATA.length) return;
             
-            const filtered = STASH_DATA.filter(s => currentFilter === 'All' || s.status === currentFilter);
+            // 1. ADIM: Sadece Onaylanmışları Al (Pending'i gizle)
+            const approvedStashes = STASH_DATA.filter(s => s.status !== 'Pending');
+
+            // 2. ADIM: Filtreleme
+            const filtered = approvedStashes.filter(s => currentFilter === 'All' || s.status === currentFilter);
             
+            if (filtered.length === 0) {
+                 grid.innerHTML = '<p class="text-white/30 text-center col-span-full">No listings found in this category.</p>';
+                 return;
+            }
+
             grid.innerHTML = filtered.map(stash => {
                 let sellerBadge = '';
                 if(stash.seller === 'VaultSMP') {
-                    // DÜZELTİLEN ROZET: Mavi Dolgulu, Siyah Tikli
+                    // VaultSMP Rozeti (Mavi dolu tikli)
                     sellerBadge = `
                         <div class="flex items-center gap-1.5 seller-badge-official mb-1">
                             <div class="relative flex items-center justify-center w-3.5 h-3.5">
@@ -324,6 +331,7 @@ async function loadStashes() {
                         </div>
                     `;
                 } else {
+                    // Kullanıcı Rozeti
                     sellerBadge = `
                         <div class="flex items-center gap-1.5 seller-badge-user mb-1">
                             <i data-lucide="user" class="w-3 h-3"></i>
@@ -332,10 +340,13 @@ async function loadStashes() {
                     `;
                 }
 
+                // Resim dizisi kontrolü (Eski veri string ise diziye çevir)
+                let mainImage = Array.isArray(stash.images) ? stash.images[0] : stash.images;
+
                 return `
                 <div class="stash-card glass rounded-[2rem] p-4 group" onclick="openModal(${stash.id})">
                     <div class="relative aspect-video w-full rounded-[1.5rem] overflow-hidden mb-6 bg-zinc-900">
-                        <img src="${stash.images[0]}" class="w-full h-full object-cover transition duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0 opacity-40 group-hover:opacity-100">
+                        <img src="${mainImage}" class="w-full h-full object-cover transition duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0 opacity-40 group-hover:opacity-100">
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
                         <div class="absolute bottom-5 left-6 w-full pr-6">
                             ${sellerBadge}
@@ -365,8 +376,11 @@ async function loadStashes() {
             const modal = document.getElementById('modal');
             const slider = document.getElementById('modal-slider');
             
+            // Resim dizisini güvenli hale getir
+            let imagesArray = Array.isArray(stash.images) ? stash.images : [stash.images];
+
             activeImageIdx = 0;
-            totalImagesCount = stash.images.length;
+            totalImagesCount = imagesArray.length;
             
             document.getElementById('modal-title').innerText = stash.title;
             document.getElementById('modal-price').innerText = stash.price;
@@ -391,7 +405,7 @@ async function loadStashes() {
             document.getElementById('total-img-count').innerText = totalImagesCount;
 
             slider.style.transform = `translateX(0)`;
-            slider.innerHTML = stash.images.map(img => `
+            slider.innerHTML = imagesArray.map(img => `
                 <div class="slide-item w-full flex-shrink-0 flex items-center justify-center bg-black h-full cursor-zoom-in" onclick="openLightbox('${img}')">
                     <img src="${img}" class="w-full h-full object-contain" alt="Stash Detail">
                 </div>
@@ -439,7 +453,7 @@ async function loadStashes() {
             }});
         }
 
-        // GÜNCELLENMİŞ THREE.JS (KÜPLER EKRANDA KALIR)
+        // THREE.JS (GÜNCELLENDİ: Sınırlı Hareket Parallax)
         function initThree() {
             const canvas = document.getElementById('bg-canvas');
             const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
@@ -450,14 +464,13 @@ async function loadStashes() {
             camera.position.z = 5;
 
             const cubes = [];
-            const initialPositions = []; // Başlangıç pozisyonlarını sakla
+            const initialPositions = []; 
 
             const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
             const material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
 
             for (let i = 0; i < 35; i++) {
                 const cube = new THREE.Mesh(geometry, material);
-                // Rastgele bir konum belirle
                 const x = (Math.random() - 0.5) * 15;
                 const y = (Math.random() - 0.5) * 15;
                 const z = (Math.random() - 0.5) * 10;
@@ -466,35 +479,26 @@ async function loadStashes() {
                 
                 scene.add(cube);
                 cubes.push(cube);
-                initialPositions.push({ x, y, z }); // Kaydet
+                initialPositions.push({ x, y, z }); 
             }
 
             let mouseX = 0, mouseY = 0;
-
             window.addEventListener('mousemove', (e) => {
-                // Mouse pozisyonunu normalize et (-1 ile 1 arası)
                 mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
                 mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
             });
 
             function animate() {
                 requestAnimationFrame(animate);
-
                 cubes.forEach((cube, i) => {
-                    // Kendi etrafında dön
                     cube.rotation.x += 0.001;
                     cube.rotation.y += 0.001;
-
-                    // Başlangıç pozisyonuna göre mouse etkisi (SINIRLI HAREKET)
-                    // Hedef = Başlangıç + (Mouse * Hareket Limiti)
+                    // Sınırlı Hareket Mantığı
                     const targetX = initialPositions[i].x + (mouseX * 2); 
                     const targetY = initialPositions[i].y - (mouseY * 2);
-
-                    // Mevcut pozisyonu hedefe doğru yavaşça (Lerp) götür
                     cube.position.x += (targetX - cube.position.x) * 0.05;
                     cube.position.y += (targetY - cube.position.y) * 0.05;
                 });
-
                 renderer.render(scene, camera);
             }
             animate();
