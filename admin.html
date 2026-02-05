@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
@@ -22,70 +23,62 @@
             overflow-x: hidden;
         }
 
-        /* ADMIN SIDEBAR & LAYOUT */
+        /* --- PRELOADER & GLITCH --- */
+        #preloader {
+            position: fixed; inset: 0; background-color: #000; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+            padding-left: 10vw; font-family: 'JetBrains Mono', monospace; color: #ffffff;
+            font-size: 1rem; line-height: 1.5; overflow: hidden;
+        }
+        #logs { display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
+        .log-line { opacity: 0; position: relative; display: block; margin-bottom: 5px; white-space: nowrap; }
+        .cursor { display: inline-block; width: 10px; height: 18px; background-color: #ffffff; animation: blink 0.8s infinite; vertical-align: text-bottom; margin-left: 5px; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* GLITCH ANIMATION */
+        .glitch-active .log-line::before, .glitch-active .log-line::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; color: #ffffff; opacity: 1; clip-path: inset(100% 0 0 0); overflow: hidden;
+        }
+        .glitch-active .log-line::before { animation: glitch-horizontal-1 3s infinite linear; }
+        .glitch-active .log-line::after { animation: glitch-horizontal-2 2.5s infinite linear reverse; }
+        
+        @keyframes glitch-horizontal-1 {
+            0%, 80%, 100% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+            81% { clip-path: inset(20% 0 50% 0); transform: translateX(-100px); }
+            82% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+            91% { clip-path: inset(60% 0 35% 0); transform: translateX(-60px); }
+            92% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+        }
+        @keyframes glitch-horizontal-2 {
+            0%, 85%, 100% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+            86% { clip-path: inset(10% 0 80% 0); transform: translateX(120px); }
+            87% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+            95% { clip-path: inset(75% 0 5% 0); transform: translateX(80px); }
+            96% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
+        }
+
+        /* --- LAYOUT --- */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.4; pointer-events: none !important; }
+        
+        /* BAŞLANGIÇTA GİZLİ (PRELOADER BİTİNCE AÇILACAK) */
+        .sidebar, .main-content { opacity: 0; }
+
         .sidebar {
-            width: 260px;
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background: #0a0a0a;
-            border-right: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            flex-direction: column;
-            padding: 2rem;
-            z-index: 50;
+            width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: #0a0a0a;
+            border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; padding: 2rem; z-index: 50;
         }
+        .main-content { margin-left: 260px; padding: 2rem 3rem; width: calc(100% - 260px); position: relative; z-index: 10; }
 
-        .main-content {
-            margin-left: 260px;
-            padding: 2rem 3rem;
-            width: calc(100% - 260px);
-        }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; color: #888; transition: all 0.3s; cursor: pointer; margin-bottom: 5px; }
+        .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: 10px;
-            color: #888;
-            transition: all 0.3s;
-            cursor: pointer;
-            margin-bottom: 5px;
-        }
-        .nav-item:hover, .nav-item.active {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-        }
-
-        /* TABLE STYLES */
-        .admin-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0 10px;
-        }
-        .admin-table th {
-            text-align: left;
-            padding: 10px 20px;
-            color: #666;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-        .table-row {
-            background: #0f0f0f;
-            transition: transform 0.2s, background 0.2s;
-        }
-        .table-row:hover {
-            transform: scale(1.01);
-            background: #141414;
-        }
-        .table-row td {
-            padding: 16px 20px;
-            border-top: 1px solid rgba(255,255,255,0.03);
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-        }
+        /* TABLE */
+        .admin-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        .admin-table th { text-align: left; padding: 10px 20px; color: #666; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .table-row { background: #0f0f0f; transition: transform 0.2s, background 0.2s; }
+        .table-row:hover { transform: scale(1.01); background: #141414; }
+        .table-row td { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03); }
         .table-row td:first-child { border-left: 1px solid rgba(255,255,255,0.03); border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
         .table-row td:last-child { border-right: 1px solid rgba(255,255,255,0.03); border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
 
@@ -95,75 +88,43 @@
         .badge-active { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
         .badge-sold { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
 
-        /* --- ADD/EDIT MODAL (USER SIDE İLE AYNI STİL) --- */
-        .admin-modal {
-            position: fixed; inset: 0; z-index: 100;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-            display: none; align-items: center; justify-content: center;
-        }
-        .modal-card {
-            background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1);
-            width: 600px; max-height: 90vh; overflow-y: auto;
-            border-radius: 24px; padding: 2rem; position: relative;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        }
+        /* MODAL */
+        .admin-modal { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; }
+        .modal-card { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); width: 600px; max-height: 90vh; overflow-y: auto; border-radius: 24px; padding: 2rem; position: relative; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
 
-        /* FORM INPUTS */
-        input, textarea, select {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            color: #fff;
-            padding: 12px 16px;
-            border-radius: 10px;
-            width: 100%;
-            outline: none;
-            transition: all 0.3s;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.9rem;
-        }
+        /* INPUTS */
+        input, textarea { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: #fff; padding: 12px 16px; border-radius: 10px; width: 100%; outline: none; transition: all 0.3s; font-family: 'Outfit', sans-serif; font-size: 0.9rem; }
         input:focus, textarea:focus { border-color: #10b981; background: rgba(16, 185, 129, 0.05); }
         label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: #666; margin-bottom: 6px; display: block; font-weight: 700; }
 
-        /* CUSTOM DROPDOWN (SERVER SELECT) */
+        /* DROPDOWN */
         .custom-select-wrapper { position: relative; width: 100%; user-select: none; }
-        .custom-select-trigger {
-            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: #fff;
-            padding: 12px 16px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
-            transition: all 0.3s;
-        }
+        .custom-select-trigger { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: #fff; padding: 12px 16px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; transition: all 0.3s; }
         .custom-select-trigger:hover { border-color: #10b981; }
         .custom-select-trigger::after { content: '▼'; font-size: 0.6rem; margin-left: 10px; transition: transform 0.3s; }
         .custom-select-wrapper.open .custom-select-trigger::after { transform: rotate(180deg); }
-        
-        .custom-options {
-            position: absolute; top: 110%; left: 0; width: 100%; background: #111; border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px; overflow: hidden; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-10px);
-            transition: all 0.3s ease; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        .custom-options { position: absolute; top: 110%; left: 0; width: 100%; background: #111; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-10px); transition: all 0.3s ease; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); }
-        
         .custom-option { padding: 12px 16px; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.02); }
         .custom-option:hover { background: rgba(16, 185, 129, 0.1); color: #10b981; padding-left: 20px; }
         .custom-option.selected { color: #10b981; font-weight: bold; }
 
-        /* IMAGE PREVIEW GRID (ADMIN VERSİYON) */
-        .image-preview-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px;
-        }
-        .preview-thumb {
-            position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
-        }
+        /* IMAGE PREVIEW */
+        .image-preview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+        .preview-thumb { position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
         .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .preview-remove {
-            position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.8); color: white;
-            width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 10px; transition: background 0.2s; border: 1px solid rgba(255,255,255,0.2);
-        }
+        .preview-remove { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.8); color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; transition: background 0.2s; border: 1px solid rgba(255,255,255,0.2); }
         .preview-remove:hover { background: #ef4444; border-color: #ef4444; }
-
     </style>
 </head>
 <body>
+
+    <div id="preloader">
+        <div id="logs"></div>
+        <div><span class="cursor"></span></div>
+    </div>
+
+    <canvas id="bg-canvas"></canvas>
 
     <aside class="sidebar">
         <div class="flex items-center gap-3 mb-10 text-white">
@@ -237,21 +198,11 @@
 
             <form id="adminForm" class="space-y-5">
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label>Identity (Seller)</label>
-                        <input type="text" id="seller" placeholder="e.g. VaultSMP / User123" required>
-                    </div>
-                    <div>
-                        <label>Price</label>
-                        <input type="text" id="price" placeholder="e.g. $150" required>
-                    </div>
+                    <div><label>Identity (Seller)</label><input type="text" id="seller" placeholder="e.g. VaultSMP" required></div>
+                    <div><label>Price</label><input type="text" id="price" placeholder="e.g. $150" required></div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label>Title</label>
-                        <input type="text" id="title" placeholder="Stash Name" required>
-                    </div>
+                    <div><label>Title</label><input type="text" id="title" placeholder="Stash Name" required></div>
                     <div>
                         <label>Region (Server)</label>
                         <div class="custom-select-wrapper">
@@ -268,21 +219,14 @@
                         </div>
                     </div>
                 </div>
-
+                <div><label>Description</label><textarea id="description" rows="3" placeholder="Full details..." required></textarea></div>
                 <div>
-                    <label>Description</label>
-                    <textarea id="description" rows="3" placeholder="Full details..." required></textarea>
-                </div>
-
-                <div>
-                    <label>Images (Imgur Links - One per line)</label>
-                    <textarea id="images" rows="3" placeholder="https://imgur.com/..." class="font-mono text-xs text-emerald-400/80 mb-2"></textarea>
-                    
+                    <label>Images (Imgur Links)</label>
+                    <textarea id="images" rows="3" placeholder="Paste links here..." class="font-mono text-xs text-emerald-400/80 mb-2"></textarea>
                     <div id="admin-preview-container" class="image-preview-grid bg-white/5 p-2 rounded-xl min-h-[50px]">
                         <span class="text-xs text-white/20 col-span-4 text-center py-2">No images loaded</span>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4 pt-4">
                     <button type="button" onclick="closeAdminModal()" class="bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition">Cancel</button>
                     <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-black py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition">Save To Database</button>
@@ -292,11 +236,97 @@
     </div>
 
     <script>
-        // --- MOCK DATA ---
+        // --- PRELOADER SYSTEM (GÜNCEL) ---
+        function runPreloader() {
+            const logs = [
+                "> INITIALIZING ADMIN PROTOCOLS...",
+                "> VERIFYING ROOT ACCESS...",
+                "> DECRYPTING INVENTORY DATA...",
+                "> CONNECTION SECURE.",
+                "> ACCESS GRANTED"
+            ];
+            const logContainer = document.getElementById('logs');
+            const preloader = document.getElementById('preloader');
+            let delay = 0;
+
+            logs.forEach((log, index) => {
+                setTimeout(() => {
+                    const p = document.createElement('div');
+                    p.className = 'log-line';
+                    p.innerText = log;
+                    p.setAttribute('data-text', log);
+                    logContainer.appendChild(p);
+                    gsap.to(p, { opacity: 1, duration: 0.1 });
+
+                    if (index === logs.length - 1) {
+                        setTimeout(() => {
+                            preloader.classList.add('glitch-active');
+                            setTimeout(() => {
+                                gsap.to(preloader, {
+                                    opacity: 0,
+                                    duration: 0.5,
+                                    onComplete: () => {
+                                        preloader.remove(); // DOM'dan silinir, tıklama açılır
+                                        gsap.to([".sidebar", ".main-content"], { opacity: 1, duration: 1 });
+                                    }
+                                });
+                            }, 800);
+                        }, 200);
+                    }
+                }, delay);
+                delay += 400;
+            });
+        }
+
+        // --- BACKGROUND THREE.JS ---
+        function initThree() {
+            const canvas = document.getElementById('bg-canvas');
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+            
+            const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+            const cubes = [];
+
+            for (let i = 0; i < 30; i++) {
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15, (Math.random() - 0.5) * 10);
+                scene.add(cube);
+                cubes.push(cube);
+            }
+
+            let mouseX = 0, mouseY = 0;
+            window.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                cubes.forEach((cube) => {
+                    cube.rotation.x += 0.001;
+                    cube.rotation.y += 0.001;
+                    cube.position.x += (mouseX * 0.5 - cube.position.x) * 0.01;
+                    cube.position.y += (mouseY * 0.5 - cube.position.y) * 0.01;
+                });
+                renderer.render(scene, camera);
+            }
+            animate();
+            window.addEventListener('resize', () => {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+            });
+        }
+
+        // --- INVENTORY LOGIC ---
         const inventory = [
-            { id: 1, title: "Obsidian Skybase", seller: "VaultSMP", region: "NA West", price: "$250", status: "Active" },
-            { id: 2, title: "Underwater Bunker", seller: "User_X", region: "EU Central", price: "$90", status: "Pending" },
-            { id: 3, title: "End Void Stash", seller: "PvPGod", region: "Asia", price: "$500", status: "Sold" },
+            { id: 101, title: "Obsidian Skybase", seller: "VaultSMP", region: "NA West", price: "$250", status: "Active" },
+            { id: 102, title: "Underwater Bunker", seller: "User_X", region: "EU Central", price: "$90", status: "Pending" },
+            { id: 103, title: "End Void Stash", seller: "PvPGod", region: "Asia", price: "$500", status: "Sold" },
         ];
 
         function renderInventory() {
@@ -325,28 +355,27 @@
             lucide.createIcons();
         }
 
-        // --- MODAL LOGIC ---
+        // --- MODAL & FORM LOGIC ---
         function openAdminModal() {
             const modal = document.getElementById('adminModal');
-            modal.style.display = 'flex';
+            // GSAP ile autoAlpha (visibility + opacity) kontrolü
+            gsap.to(modal, { autoAlpha: 1, duration: 0.3 });
             gsap.fromTo(".modal-card", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 });
         }
 
         function closeAdminModal() {
             const modal = document.getElementById('adminModal');
-            gsap.to(".modal-card", { y: 20, opacity: 0, duration: 0.2, onComplete: () => { modal.style.display = 'none'; } });
+            gsap.to(".modal-card", { y: 20, opacity: 0, duration: 0.2 });
+            gsap.to(modal, { autoAlpha: 0, duration: 0.2 });
         }
 
-        // --- CUSTOM DROPDOWN LOGIC (ADMIN) ---
         function setupCustomDropdown() {
             const wrapper = document.querySelector('.custom-select-wrapper');
             const trigger = wrapper.querySelector('.custom-select-trigger');
             const options = wrapper.querySelectorAll('.custom-option');
             const hiddenInput = document.getElementById('region');
 
-            trigger.addEventListener('click', () => {
-                wrapper.classList.toggle('open');
-            });
+            trigger.addEventListener('click', () => wrapper.classList.toggle('open'));
 
             options.forEach(option => {
                 option.addEventListener('click', () => {
@@ -354,7 +383,6 @@
                     option.classList.add('selected');
                     trigger.querySelector('span').textContent = option.textContent;
                     trigger.style.borderColor = '#10b981';
-                    trigger.style.background = 'rgba(16, 185, 129, 0.05)';
                     hiddenInput.value = option.getAttribute('data-value');
                     wrapper.classList.remove('open');
                 });
@@ -365,7 +393,6 @@
             });
         }
 
-        // --- IMAGE PREVIEW & DELETE LOGIC (ADMIN) ---
         function setupImagePreviews() {
             const input = document.getElementById('images');
             const container = document.getElementById('admin-preview-container');
@@ -379,31 +406,22 @@
                     container.innerHTML = '<span class="text-xs text-white/20 col-span-4 text-center py-2">No images loaded</span>';
                     return;
                 }
-
                 container.innerHTML = ''; 
-
                 urls.forEach((url, index) => {
-                    // Basit bir görsel kontrolü
                     const thumb = document.createElement('div');
                     thumb.className = 'preview-thumb';
-                    
                     const img = document.createElement('img');
                     img.src = url;
-                    // Hatalı linkler için placeholder
                     img.onerror = () => { img.src = 'https://via.placeholder.com/100?text=Error'; };
-
                     const removeBtn = document.createElement('div');
                     removeBtn.className = 'preview-remove';
                     removeBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i>';
-                    
-                    // SİLME İŞLEMİ
                     removeBtn.onclick = () => {
                         const currentUrls = input.value.split('\n');
                         currentUrls.splice(index, 1);
                         input.value = currentUrls.join('\n');
-                        updatePreviews(); // Recursive update
+                        updatePreviews();
                     };
-
                     thumb.appendChild(img);
                     thumb.appendChild(removeBtn);
                     container.appendChild(thumb);
@@ -414,6 +432,8 @@
 
         // --- INIT ---
         window.addEventListener('load', () => {
+            initThree();
+            runPreloader(); // BU ÇOK ÖNEMLİ, YOKSA SAYFA AÇILMAZ
             renderInventory();
             setupCustomDropdown();
             setupImagePreviews();
