@@ -36,6 +36,7 @@
         .glass {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
@@ -97,7 +98,7 @@
 
     <canvas id="bg-canvas"></canvas>
 
-    <nav id="main-nav" class="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent transition-all duration-500">
+    <nav id="main-nav" class="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
         <div class="flex items-center space-x-2">
             <div class="w-8 h-8 bg-white rounded-sm rotate-45 flex items-center justify-center">
                 <i data-lucide="box" class="text-black w-4 h-4 -rotate-45"></i>
@@ -112,7 +113,7 @@
         </div>
     </nav>
 
-    <div id="main-content" class="transition-all duration-700 origin-center">
+    <div id="main-content" class="origin-center">
         
         <section class="min-h-screen flex flex-col justify-center items-center px-6 pt-20 relative z-10">
             <div class="max-w-4xl text-center">
@@ -266,49 +267,6 @@
     <div id="lightbox" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl hidden flex-col items-center justify-center p-4 cursor-zoom-out" onclick="closeLightbox()"><button class="absolute top-6 right-6 text-white/50 hover:text-white transition"><i data-lucide="x" class="w-8 h-8"></i></button><img id="lightbox-img" src="" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl shadow-emerald-500/10 scale-95 transition-transform duration-300"><p class="text-white/30 text-xs mt-4 uppercase tracking-widest">Click anywhere to close</p></div>
 
     <script>
-        // --- AUDIO UX (GÜVENLİ MOD) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.15;
-        masterGain.connect(audioCtx.destination);
-
-        // KİLİT AÇICI: Kullanıcının sayfadaki HERHANGİ bir ilk tıklamasını yakalar
-        document.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }, { once: true }); // Sadece bir kere çalışır
-
-        function playHoverSound() {
-            if (audioCtx.state !== 'running') return; // Hazır değilse çalma (Hata verme)
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
-            osc.connect(gain);
-            gain.connect(masterGain);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.05);
-        }
-
-        function playClickSound() {
-            if (audioCtx.state !== 'running') return; // Hazır değilse çalma
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(masterGain);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
-        }
-
         // --- THREE.JS LOGIC ---
         let cubes = [];
         let initialPositions = [];
@@ -368,7 +326,18 @@
         function openSellMode() {
             isSellModeActive = true;
             const tl = gsap.timeline();
-            tl.to("#main-content", { duration: 0.5, opacity: 0, scale: 0.95, filter: "blur(10px)", pointerEvents: "none", ease: "power2.inOut" }, "start");
+            
+            // 1. Yazılar HIZLI kaybolsun (0.3s)
+            tl.to("#main-content", { 
+                duration: 0.3, 
+                opacity: 0, 
+                scale: 0.95, 
+                filter: "blur(10px)", 
+                pointerEvents: "none", 
+                ease: "power2.inOut" 
+            }, "start");
+
+            // 2. Küpler Patlasın (0.8s)
             cubes.forEach((cube, i) => {
                 const pushDirX = initialPositions[i].x > 0 ? 1 : -1;
                 const pushDirY = initialPositions[i].y > 0 ? 1 : -1;
@@ -377,6 +346,8 @@
                 tl.to(cube.position, { x: targetX, y: targetY, duration: 0.8, ease: "power3.inOut" }, "start");
                 tl.to(cube.rotation, { z: "+=2", duration: 0.8, ease: "power1.out" }, "start");
             });
+
+            // 3. Form Gelsin
             const overlay = document.getElementById('sell-overlay');
             overlay.style.display = 'flex';
             gsap.fromTo("#sell-form-card", { opacity: 0, y: 50, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, delay: 0.2, ease: "expo.out" });
@@ -384,8 +355,20 @@
 
         function closeSellMode() {
             gsap.to("#sell-form-card", { opacity: 0, y: 50, duration: 0.4, ease: "power2.in", onComplete: () => { document.getElementById('sell-overlay').style.display = 'none'; } });
+            
             const tl = gsap.timeline({ onComplete: () => { isSellModeActive = false; } });
-            tl.to("#main-content", { duration: 0.8, opacity: 1, scale: 1, filter: "blur(0px)", pointerEvents: "auto", ease: "power2.out" }, "return");
+            
+            // YAZILAR & CAM EFEKTİ DÜZELTMESİ (clearProps)
+            tl.to("#main-content", { 
+                duration: 0.8, 
+                opacity: 1, 
+                scale: 1, 
+                filter: "blur(0px)", 
+                clearProps: "filter", // BUZLU CAM SORUNU ÇÖZÜMÜ
+                pointerEvents: "auto", 
+                ease: "power2.out" 
+            }, "return");
+
             cubes.forEach((cube, i) => {
                 tl.to(cube.position, { x: initialPositions[i].x, y: initialPositions[i].y, z: initialPositions[i].z, duration: 1.2, ease: "power4.out" }, "return");
             });
@@ -503,7 +486,7 @@
         function openLightbox(src) { const lb = document.getElementById('lightbox'); const lbImg = document.getElementById('lightbox-img'); lbImg.src = src; lb.classList.remove('hidden'); lb.classList.add('flex'); gsap.fromTo(lb, { opacity: 0 }, { opacity: 1, duration: 0.3 }); gsap.fromTo(lbImg, { scale: 0.8 }, { scale: 1, duration: 0.4, ease: "power2.out" }); }
         function closeLightbox() { const lb = document.getElementById('lightbox'); gsap.to(lb, { opacity: 0, duration: 0.2, onComplete: () => { lb.classList.add('hidden'); lb.classList.remove('flex'); }}); }
 
-        // --- INIT & BUG FIX ---
+        // --- INIT ---
         window.onload = () => {
             initThree();
             loadStashes();
@@ -523,19 +506,6 @@
                 highlight.style.left = `${activeBtn.offsetLeft}px`;
                 highlight.style.width = `${activeBtn.offsetWidth}px`;
             }
-
-            // --- ATTACH SOUNDS SAFELY ---
-            document.body.addEventListener('mouseenter', (e) => {
-                if(e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('.stash-card')) {
-                    playHoverSound();
-                }
-            }, true);
-
-            document.body.addEventListener('mousedown', (e) => {
-                if(e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('.stash-card')) {
-                    playClickSound();
-                }
-            }, true);
         };
 
         window.onclick = (e) => { 
