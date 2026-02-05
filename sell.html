@@ -3,55 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sell Your Stash | Vault SMP</title>
+    <title>Submit Listing | Vault SMP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
-        body { font-family: 'Outfit', sans-serif; background-color: #050505; color: white; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        input, select, textarea { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; transition: all 0.3s; }
-        input:focus { border-color: #34d399; }
+        body { font-family: 'Outfit', sans-serif; background-color: #050505; color: white; overflow-x: hidden; }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        input, textarea {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            width: 100%;
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        input:focus, textarea:focus {
+            border-color: #34d399;
+            background: rgba(52, 211, 153, 0.05);
+            box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.05);
+        }
+
+        label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 6px;
+            display: block;
+            font-weight: 700;
+        }
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6 bg-[url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2000')] bg-cover bg-center">
-    <div class="absolute inset-0 bg-black/90"></div>
+<body class="min-h-screen flex flex-col">
+    <canvas id="particle-canvas"></canvas>
 
-    <div class="glass w-full max-w-2xl p-8 rounded-3xl relative z-10">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-emerald-400">SELL YOUR STASH</h1>
-            <a href="/" class="text-xs text-white/50 hover:text-white uppercase">Back to Home</a>
+    <nav class="w-full px-8 py-6 flex justify-between items-center z-50">
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 bg-white rounded-sm rotate-45 flex items-center justify-center">
+                <i data-lucide="box" class="text-black w-4 h-4 -rotate-45"></i>
+            </div>
+            <span class="text-xl font-bold tracking-tighter uppercase">Vault.smp</span>
         </div>
-        <p class="text-sm text-white/60 mb-8">Submit your stash details. Our admins will verify the coordinates and list it on the marketplace.</p>
+        <a href="/" class="text-xs font-bold uppercase tracking-widest text-white/50 hover:text-white transition">Back to Showroom</a>
+    </nav>
 
-        <form id="sellForm" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <input type="text" id="seller" placeholder="Your Username (Discord/IGN)" required>
-                <input type="text" id="price" placeholder="Price (e.g. 1,000,000 $)" required>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <input type="text" id="title" placeholder="Stash Title (e.g. Sky Base)" required>
-                <input type="text" id="region" placeholder="Region (e.g. End Wilds)" required>
-            </div>
-            <input type="text" id="security" placeholder="Security Level (e.g. Obsidian Box, Hidden)" required>
-            <textarea id="description" rows="3" placeholder="Describe the loot and defenses..." required></textarea>
-            
-            <div>
-                <label class="text-[10px] uppercase text-white/40 font-bold block mb-1">Image Links (One per line)</label>
-                <textarea id="images" rows="3" placeholder="https://imgur.com/..." required class="font-mono text-xs"></textarea>
+    <div class="flex-grow flex items-center justify-center p-6 pb-20">
+        <div class="glass w-full max-w-2xl p-10 rounded-[2rem] relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+            <div class="mb-10 text-center">
+                <h1 class="text-4xl font-bold tracking-tight mb-3">SUBMIT YOUR STASH</h1>
+                <p class="text-white/40 text-sm font-light max-w-md mx-auto">
+                    Listing request will be reviewed by Vault Admins for verification.
+                </p>
             </div>
 
-            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition mt-4">
-                SUBMIT FOR REVIEW
-            </button>
-        </form>
+            <form id="sellForm" class="space-y-6 relative z-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label>Seller Name (Discord/IGN)</label>
+                        <input type="text" id="seller" placeholder="Who are you?" required>
+                    </div>
+                    <div>
+                        <label>Expected Price</label>
+                        <input type="text" id="price" placeholder="e.g. 1,500,000 $" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label>Stash Title</label>
+                        <input type="text" id="title" placeholder="e.g. Sky Vault Alpha" required>
+                    </div>
+                    <div>
+                        <label>Region</label>
+                        <input type="text" id="region" placeholder="e.g. End Highlands" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Security & Description</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <input type="text" id="security" placeholder="Security Level (e.g. Max Lvl 5)" required>
+                    </div>
+                    <textarea id="description" rows="4" placeholder="Describe contents, defenses, and coordinates (Admins only see coords)..." required></textarea>
+                </div>
+                
+                <div>
+                    <label>Image Evidence Links (One per line)</label>
+                    <textarea id="images" rows="3" placeholder="https://imgur.com/example1&#10;https://imgur.com/example2" required class="font-mono text-xs tracking-wide text-emerald-400/80"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-5 rounded-xl transition duration-300 transform active:scale-[0.98] flex items-center justify-center gap-3 uppercase tracking-widest text-xs mt-4">
+                    <span>Submit for Review</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
     </div>
 
     <script>
+        lucide.createIcons();
+
+        // PARTICLE EFFECT (Mouse'dan kaçan noktalar)
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let mouse = { x: null, y: null };
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.density = (Math.random() * 30) + 1;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; // Beyaz partiküller
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+            update() {
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                let forceDirectionX = dx / distance;
+                let forceDirectionY = dy / distance;
+                let maxDistance = 150; // Mouse etki alanı
+                let force = (maxDistance - distance) / maxDistance;
+                let directionX = forceDirectionX * force * this.density;
+                let directionY = forceDirectionY * force * this.density;
+
+                if (distance < maxDistance) {
+                    this.x -= directionX * 3; // Mouse'dan kaçış
+                    this.y -= directionY * 3;
+                } else {
+                    if (this.x !== this.baseX) {
+                        let dx = this.x - this.baseX;
+                        this.x -= dx / 10;
+                    }
+                    if (this.y !== this.baseY) {
+                        let dy = this.y - this.baseY;
+                        this.y -= dy / 10;
+                    }
+                }
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 150; i++) {
+                particles.push(new Particle());
+            }
+        }
+        initParticles();
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].draw();
+                particles[i].update();
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // FORM GÖNDERME
         document.getElementById('sellForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
-            btn.innerHTML = 'Sending...';
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Sending Protocol...';
             btn.disabled = true;
 
             const images = document.getElementById('images').value.split('\n').map(u => u.trim()).filter(u => u);
@@ -73,14 +231,14 @@
                     body: JSON.stringify(data)
                 });
                 if(res.ok) {
-                    alert('✅ Submission Successful! Waiting for Admin Approval.');
+                    alert('✅ Listing Request Sent! Waiting for Admin verification.');
                     e.target.reset();
                 } else {
                     alert('Error submitting form.');
                 }
             } catch(err) { alert('Connection Error'); }
             
-            btn.innerHTML = 'SUBMIT FOR REVIEW';
+            btn.innerHTML = originalText;
             btn.disabled = false;
         });
     </script>
