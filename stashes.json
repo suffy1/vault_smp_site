@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "title": "GAMBLER STASH",
+    "region": "UNDERGROUND",
+    "price": "75,000,000 $",
+    "security": "High",
+    "seller": "VaultSMP",
+    "description": "Deep ocean stash with a working roulette table. Luxury quartz and old money vibes.",
+    "images": [
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468606395342393455/image.png?ex=6984a1ca&is=6983504a&hm=9810ab4a5f9b6ab8f124cf98806ebb13900aba964b3c52f120fc6f7767623851&",
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468602586390331466/2026-02-04_16.30.15.png?ex=69849e3d&is=69834cbd&hm=b1787742223a6dde8fc5e87408ce7465dfeb77c2a21c50b3acc5db4c0cd96af0&",
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468602666702868532/2026-02-04_16.30.56.png?ex=69849e51&is=69834cd1&hm=0950efd3887530860669d7fc903a8e32f7e35cb5a4fe100240a95bb945bd91c3&",
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468602770381733971/2026-02-04_16.31.59.png?ex=69849e69&is=69834ce9&hm=9dbca2b4cbdbf6e93e34c45dfdb9f78b40e7df2de5f7989bf6a7cf7fd5f7b29c&",
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468602784525058301/2026-02-04_16.30.32.png?ex=69849e6d&is=69834ced&hm=0d66c137586e00eef8b4d1a32e0dd1ba1b0a494fb9ed3e02017d52f0accf804a&",
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468602793303474261/2026-02-04_16.30.39.png?ex=69849e6f&is=69834cef&hm=a69ce5e3ef7d9ffdb4c212d97dfa95145da0c72c69377f2a12e04b6c7d2f37a9&"
+    ],
+    "status": "Available"
+  },
+ {
+    "id": 2,
+    "title": "IKEA V4",
+    "region": "UNDERGROUND",
+    "price": "20,000,000 $",
+    "security": "Medium",
+    "seller": "VaultSMP",
+    "description": "Deep underground kelp farm with 100 smokers and a shulker loader system.",
+    "images": [
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468647832406724824/image.png?ex=6984c861&is=698376e1&hm=bf23481e0fd9f981b037bcddd6076d8c56e67a630c1362dafff433861eeba732&",
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468647865260707999/2026-02-04_19.39.58.png?ex=6984c869&is=698376e9&hm=0f93d591c0c3d14a51431cca31965307915a5038cddf0ab728ce89c536767792&",
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468647884521078927/2026-02-04_19.40.41.png?ex=6984c86d&is=698376ed&hm=2c8d6e201501d118a1ca95b5e490369299f8ebd9bab6e830225d59c1f26111a6&",
+      "https://cdn.discordapp.com/attachments/1468602485014003885/1468647898500698337/2026-02-04_19.41.00.png?ex=6984c871&is=698376f1&hm=7d999be7fa62b7f9ae3385f301db50ac8976085dcdcb1e19bfaf8b334f70c969&"],
+    "status": "Available"
+  }]
