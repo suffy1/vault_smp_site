@@ -8,24 +8,23 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        /* SADECE OUTFIT FONTU (Lüks ve Modern) */
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
         
         body { 
             font-family: 'Outfit', sans-serif; 
             background-color: #050505; 
             color: white; 
-            overflow: hidden; /* Scroll kapalı, tek ekran */
+            overflow: hidden; /* Scroll kapalı */
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
         
         .glass {
-            background: rgba(10, 10, 10, 0.7);
+            background: rgba(10, 10, 10, 0.75);
             backdrop-filter: blur(30px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 20px 80px rgba(0,0,0,0.9);
+            box-shadow: 0 20px 80px rgba(0,0,0,0.95);
         }
         
         input, textarea {
@@ -38,17 +37,16 @@
             outline: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 0.9rem;
-            font-family: 'Outfit', sans-serif; /* Font düzeltildi */
+            font-family: 'Outfit', sans-serif;
             font-weight: 400;
         }
 
-        /* Placeholder stili */
         ::placeholder {
             font-family: 'Outfit', sans-serif;
             font-weight: 300;
             letter-spacing: 0.05em;
             color: rgba(255, 255, 255, 0.3);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
         }
         
@@ -95,7 +93,6 @@
     </nav>
 
     <div class="w-full h-full flex items-center justify-center relative z-10 px-4">
-        
         <div id="form-card" class="glass w-full max-w-[600px] p-8 rounded-3xl relative opacity-0 translate-y-10 scale-95 overflow-hidden">
             
             <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
@@ -138,7 +135,7 @@
                 
                 <div class="group">
                     <label>Evidence</label>
-                    <textarea id="images" rows="3" placeholder="Imgur Links (One per line)" required class="resize-none font-mono text-xs"></textarea>
+                    <textarea id="images" rows="3" placeholder="Imgur Links (One per line)" required class="resize-none font-mono text-xs text-emerald-400/80"></textarea>
                 </div>
 
                 <button type="submit" class="w-full bg-white hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] mt-2 group overflow-hidden relative">
@@ -150,97 +147,108 @@
     </div>
 
     <script>
-        lucide.createIcons();
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.15; 
+        masterGain.connect(audioCtx.destination);
 
-        // 1. ANİMASYON: Giriş
+        function playHoverSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        window.playSuccessSound = function() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(440, audioCtx.currentTime);
+            gain1.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc1.connect(gain1);
+            gain1.connect(masterGain);
+            osc1.start();
+            osc1.stop(audioCtx.currentTime + 0.5);
+
+            setTimeout(() => {
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(880, audioCtx.currentTime);
+                gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+                osc2.connect(gain2);
+                gain2.connect(masterGain);
+                osc2.start();
+                osc2.stop(audioCtx.currentTime + 0.6);
+            }, 150);
+        };
+
+        // Form logic
+        lucide.createIcons();
         window.addEventListener('load', () => {
-            gsap.to("#form-card", {
-                duration: 1.2,
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                ease: "expo.out",
-                delay: 0.1
-            });
+            gsap.to("#form-card", { duration: 1.2, opacity: 1, y: 0, scale: 1, ease: "expo.out", delay: 0.1 });
         });
 
-        // 2. PARTİKÜL SİSTEMİ (Değişmedi)
+        // Particles
         const canvas = document.getElementById('particle-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
         let mouse = { x: undefined, y: undefined };
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.x;
-            mouse.y = e.y;
-        });
-
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+        window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
         class Particle {
-            constructor() {
-                this.init();
-            }
-            init() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height + canvas.height;
-                this.size = Math.random() * 1.5;
-                this.speedY = Math.random() * 0.5 + 0.1;
-                this.opacity = Math.random() * 0.4 + 0.1;
-            }
-            draw() {
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            update() {
-                this.y -= this.speedY;
-                
-                // Mouse Kaçış Efekti
-                if (mouse.x) {
-                    let dx = mouse.x - this.x;
-                    let dy = mouse.y - this.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < 100) {
-                        this.x -= (dx/dist) * 2;
-                        this.y -= (dy/dist) * 2;
-                    }
-                }
-
-                if (this.y < 0) this.init();
+            constructor() { this.init(); }
+            init() { this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height + canvas.height; this.size = Math.random() * 1.5; this.speedY = Math.random() * 0.5 + 0.1; this.opacity = Math.random() * 0.4 + 0.1; }
+            draw() { ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+            update() { 
+                this.y -= this.speedY; 
+                if (mouse.x) { let dx = mouse.x - this.x; let dy = mouse.y - this.y; let dist = Math.sqrt(dx*dx + dy*dy); if (dist < 100) { this.x -= (dx/dist)*2; this.y -= (dy/dist)*2; } }
+                if (this.y < 0) this.init(); 
             }
         }
-
-        function initParticles() {
-            particles = [];
-            for (let i = 0; i < 80; i++) particles.push(new Particle());
-        }
+        function initParticles() { particles = []; for (let i=0; i<80; i++) particles.push(new Particle()); }
         initParticles();
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => { p.draw(); p.update(); });
-            requestAnimationFrame(animate);
-        }
+        function animate() { ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p => { p.draw(); p.update(); }); requestAnimationFrame(animate); }
         animate();
 
-        // FORM SUBMIT
+        // Submit Logic with Sound
         document.getElementById('sellForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
             const originalText = btn.innerHTML;
             btn.innerHTML = 'ENCRYPTING...';
             btn.disabled = true;
-
-            // Linkleri satır satır veya boşlukla ayır
+            
             const rawImages = document.getElementById('images').value;
-            const images = rawImages.split(/[\s,]+/).filter(u => u); 
+            const images = rawImages.split('\n').map(u => u.trim()).filter(u => u);
             
             const data = {
                 seller: document.getElementById('seller').value,
@@ -254,30 +262,27 @@
 
             try {
                 const res = await fetch('/api/submit-stash', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
                 });
                 if(res.ok) {
+                    playSuccessSound(); // BAŞARI SESİ
                     btn.classList.replace('bg-white', 'bg-emerald-500');
                     btn.classList.replace('text-black', 'text-white');
                     btn.innerHTML = 'UPLOAD COMPLETE';
-                    setTimeout(() => {
-                         e.target.reset();
-                         btn.classList.replace('bg-emerald-500', 'bg-white');
-                         btn.classList.replace('text-white', 'text-black');
-                         btn.innerHTML = originalText;
-                         btn.disabled = false;
-                    }, 2000);
+                    setTimeout(() => { e.target.reset(); btn.classList.replace('bg-emerald-500', 'bg-white'); btn.classList.replace('text-white', 'text-black'); btn.innerHTML = originalText; btn.disabled = false; }, 2000);
                 } else {
-                    alert('Error');
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
+                    alert('Error'); btn.innerHTML = originalText; btn.disabled = false;
                 }
-            } catch(err) { 
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            } catch(err) { btn.innerHTML = originalText; btn.disabled = false; }
+        });
+
+        // Add Sound Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const interactables = document.querySelectorAll('button, a, input, textarea');
+            interactables.forEach(el => {
+                el.addEventListener('mouseenter', playHoverSound);
+                if(el.tagName === 'BUTTON' || el.tagName === 'A') el.addEventListener('mousedown', playClickSound);
+            });
         });
     </script>
 </body>
