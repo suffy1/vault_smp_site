@@ -23,26 +23,30 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- PRELOADER STYLES (YENİ) --- */
+        /* --- PRELOADER & GLITCH STYLES (YENİ) --- */
         #preloader {
             position: fixed;
             inset: 0;
             background-color: #000;
-            z-index: 9999; /* En üstte */
+            z-index: 9999;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: flex-start;
             padding-left: 10vw;
-            font-family: 'JetBrains Mono', monospace; /* Hacker fontu */
+            font-family: 'JetBrains Mono', monospace;
             color: #10b981; /* Matrix Yeşili */
             font-size: 0.9rem;
             line-height: 1.6;
+            overflow: hidden;
         }
+        
         .log-line {
-            opacity: 0; /* JS ile görünür olacak */
+            opacity: 0;
             display: block;
+            margin-bottom: 4px;
         }
+
         .cursor {
             display: inline-block;
             width: 8px;
@@ -53,6 +57,21 @@
             margin-left: 5px;
         }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* GLITCH ANIMATION KEYFRAMES */
+        @keyframes glitch-anim {
+            0% { transform: translate(0); text-shadow: none; opacity: 1; }
+            20% { transform: translate(-2px, 2px); text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9; }
+            40% { transform: translate(2px, -2px); text-shadow: -2px 0 #ff00c1, 2px 0 #00fff9; }
+            60% { transform: translate(-2px, 0); opacity: 0.8; }
+            80% { transform: translate(2px, 0); text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9; }
+            100% { transform: translate(0); opacity: 0; } /* Sonunda yok olsun */
+        }
+
+        .glitch-active .log-line, .glitch-active .cursor {
+            animation: glitch-anim 0.3s steps(2) forwards; /* Çok hızlı bozulma */
+            color: #fff; /* Yazılar beyaza dönsün bozulurken */
+        }
 
         /* KATMAN 0: CANVAS */
         #bg-canvas {
@@ -70,13 +89,13 @@
         #main-content {
             position: relative;
             z-index: 10;
-            opacity: 0; /* Preloader bitene kadar gizli */
+            opacity: 0; 
         }
 
         /* KATMAN 2: NAV */
         nav {
             z-index: 50;
-            opacity: 0; /* Preloader bitene kadar gizli */
+            opacity: 0;
         }
 
         /* CAM EFEKTLERİ */
@@ -181,7 +200,6 @@
     </nav>
 
     <div id="main-content">
-        
         <section class="min-h-screen flex flex-col justify-center items-center px-6 pt-20">
             <div class="max-w-4xl text-center z-10 pointer-events-none">
                 <p id="hero-sub" class="text-xs font-bold uppercase tracking-[0.4em] mb-4 opacity-0 translate-y-4">Private Inventory</p>
@@ -205,7 +223,6 @@
             <div class="flex flex-col md:flex-row justify-between items-center mb-20 gap-8">
                 <h2 class="text-sm font-bold uppercase tracking-widest opacity-40 whitespace-nowrap">Active Listings</h2>
                 <div class="h-px bg-white/10 flex-grow hidden md:block"></div>
-                
                 <div class="relative flex bg-white/5 p-1 rounded-full border border-white/10" id="filter-wrapper">
                     <div id="filter-highlight" class="absolute bg-white rounded-full transition-all duration-300 ease-in-out z-0 pointer-events-none" style="top: 4px; bottom: 4px; left: 4px; width: 0;"></div>
                     <button onclick="filterItems('All', this)" class="filter-btn active relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition pointer-events-auto">All</button>
@@ -213,7 +230,6 @@
                     <button onclick="filterItems('Sold', this)" class="filter-btn relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition pointer-events-auto">Sold</button>
                 </div>
             </div>
-
             <div id="stash-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 min-h-[300px]">
                  <p class="text-white/30 text-center col-span-full pt-10">Loading catalogue...</p>
             </div>
@@ -254,38 +270,22 @@
 
     <div id="sell-overlay">
         <div id="sell-form-card" class="sell-glass w-full max-w-[550px] p-8 rounded-3xl relative overflow-hidden mx-4 opacity-0 translate-y-20 scale-95">
-             
              <button id="btn-close-sell" class="absolute top-6 right-6 z-50 text-white/30 hover:text-white transition transform hover:rotate-90 duration-300 pointer-events-auto">
                 <i data-lucide="x" class="w-6 h-6"></i>
              </button>
-
              <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-
              <div class="mb-6 text-center">
                  <h1 class="text-3xl font-bold tracking-tight mb-2 text-white">SUBMIT STASH</h1>
                  <div class="w-12 h-0.5 bg-emerald-500/50 mx-auto rounded-full"></div>
              </div>
- 
              <form id="sellForm" class="space-y-4">
                  <div class="grid grid-cols-2 gap-4">
-                     <div class="group">
-                         <label>Identity</label>
-                         <input type="text" id="seller" placeholder="Discord / IGN" required>
-                     </div>
-                     <div class="group">
-                         <label>Valuation</label>
-                         <input type="text" id="price" placeholder="Price ($)" required>
-                     </div>
+                     <div class="group"><label>Identity</label><input type="text" id="seller" placeholder="Discord / IGN" required></div>
+                     <div class="group"><label>Valuation</label><input type="text" id="price" placeholder="Price ($)" required></div>
                  </div>
                  <div class="grid grid-cols-2 gap-4">
-                     <div class="group">
-                         <label>Title</label>
-                         <input type="text" id="title" placeholder="Stash Name" required>
-                     </div>
-                     <div class="group">
-                         <label>Region</label>
-                         <input type="text" id="region" placeholder="XYZ / Biome" required>
-                     </div>
+                     <div class="group"><label>Title</label><input type="text" id="title" placeholder="Stash Name" required></div>
+                     <div class="group"><label>Region</label><input type="text" id="region" placeholder="XYZ / Biome" required></div>
                  </div>
                  <div class="group">
                      <label>Security & Intel</label>
@@ -294,10 +294,7 @@
                           <textarea id="description" rows="2" placeholder="Detailed Manifest & Coords..." required class="resize-none"></textarea>
                      </div>
                  </div>
-                 <div class="group">
-                     <label>Evidence</label>
-                     <textarea id="images" rows="2" placeholder="Imgur Links (One per line)" required class="resize-none font-mono text-xs text-emerald-400/80"></textarea>
-                 </div>
+                 <div class="group"><label>Evidence</label><textarea id="images" rows="2" placeholder="Imgur Links (One per line)" required class="resize-none font-mono text-xs text-emerald-400/80"></textarea></div>
                  <button type="submit" class="w-full bg-white hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] mt-2 group overflow-hidden relative">
                      <span class="relative z-10">Initialize Upload</span>
                      <i data-lucide="arrow-right" class="w-3.5 h-3.5 relative z-10 group-hover:translate-x-1 transition-transform"></i>
@@ -343,11 +340,12 @@
             "> BYPASSING REGIONAL FIREWALLS...",
             "> VERIFYING ENCRYPTION KEYS...",
             "> CONNECTION ESTABLISHED.",
-            "> LOADING VAULT ASSETS..."
+            "> ACCESS GRANTED"
         ];
 
         function runPreloader() {
             const logContainer = document.getElementById('logs');
+            const preloader = document.getElementById('preloader');
             let delay = 0;
 
             logs.forEach((log, index) => {
@@ -356,39 +354,34 @@
                     p.className = 'log-line';
                     p.innerText = log;
                     logContainer.appendChild(p);
-                    
-                    // Fade in effect
-                    gsap.to(p, { opacity: 1, duration: 0.3 });
+                    gsap.to(p, { opacity: 1, duration: 0.1 }); // Hızlı yazma efekti
 
-                    // Scroll to bottom
-                    // window.scrollTo(0, document.body.scrollHeight); 
-                }, delay);
-                delay += 600; // Her satır arası bekleme süresi
-            });
-
-            // Preloader Bitiş
-            setTimeout(() => {
-                const preloader = document.getElementById('preloader');
-                
-                // 1. Preloader'ı yok et
-                gsap.to(preloader, {
-                    opacity: 0,
-                    duration: 0.8,
-                    ease: "power2.inOut",
-                    onComplete: () => {
-                        preloader.remove(); // DOM'dan sil (Tıklama sorununu önler)
-                        startSiteAnimations(); // Ana site animasyonlarını başlat
+                    // SON MESAJ GELDİĞİNDE:
+                    if (index === logs.length - 1) {
+                        setTimeout(() => {
+                            // GLITCH EFFECT BAŞLAT
+                            preloader.classList.add('glitch-active');
+                            
+                            // KISA BİR SÜRE SONRA PRELOADER'I SİL
+                            setTimeout(() => {
+                                gsap.to(preloader, {
+                                    opacity: 0,
+                                    duration: 0.5,
+                                    onComplete: () => {
+                                        preloader.remove();
+                                        startSiteAnimations();
+                                    }
+                                });
+                            }, 400); // 400ms Glitch süresi
+                        }, 200);
                     }
-                });
-
-            }, delay + 800);
+                }, delay);
+                delay += 500;
+            });
         }
 
         function startSiteAnimations() {
-            // Navbar ve İçerik Görünür Olsun
             gsap.to(["#main-content", "nav"], { opacity: 1, duration: 1 });
-
-            // Hero Animasyonları
             const tl = gsap.timeline();
             tl.to("#hero-sub", { opacity: 0.6, y: 0, duration: 1 })
               .to("#hero-title", { opacity: 1, duration: 1.2 }, "-=0.6")
@@ -456,15 +449,7 @@
         function openSellMode() {
             isSellModeActive = true;
             const tl = gsap.timeline();
-            
-            tl.to("#main-content", { 
-                duration: 0.2, 
-                autoAlpha: 0, 
-                scale: 0.95, 
-                filter: "blur(10px)", 
-                ease: "power2.in" 
-            }, "start");
-
+            tl.to("#main-content", { duration: 0.2, autoAlpha: 0, scale: 0.95, filter: "blur(10px)", ease: "power2.in" }, "start");
             cubes.forEach((cube, i) => {
                 const pushDirX = initialPositions[i].x > 0 ? 1 : -1;
                 const pushDirY = initialPositions[i].y > 0 ? 1 : -1;
@@ -473,27 +458,14 @@
                 tl.to(cube.position, { x: targetX, y: targetY, duration: 0.8, ease: "power3.inOut" }, "start");
                 tl.to(cube.rotation, { z: "+=2", duration: 0.8, ease: "power1.out" }, "start");
             });
-
             gsap.to("#sell-overlay", { autoAlpha: 1, duration: 0.1 }); 
             gsap.fromTo("#sell-form-card", { opacity: 0, y: 50, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, delay: 0.1, ease: "expo.out" });
         }
 
         function closeSellMode() {
-            gsap.to("#sell-form-card", { opacity: 0, y: 50, duration: 0.4, ease: "power2.in", onComplete: () => { 
-                gsap.to("#sell-overlay", { autoAlpha: 0, duration: 0.2 }); 
-            }});
-            
+            gsap.to("#sell-form-card", { opacity: 0, y: 50, duration: 0.4, ease: "power2.in", onComplete: () => { gsap.to("#sell-overlay", { autoAlpha: 0, duration: 0.2 }); }});
             const tl = gsap.timeline({ onComplete: () => { isSellModeActive = false; } });
-            
-            tl.to("#main-content", { 
-                duration: 0.8, 
-                autoAlpha: 1, 
-                scale: 1, 
-                filter: "blur(0px)", 
-                clearProps: "filter", 
-                ease: "power2.out" 
-            }, "return");
-
+            tl.to("#main-content", { duration: 0.8, autoAlpha: 1, scale: 1, filter: "blur(0px)", clearProps: "filter", ease: "power2.out" }, "return");
             cubes.forEach((cube, i) => {
                 tl.to(cube.position, { x: initialPositions[i].x, y: initialPositions[i].y, z: initialPositions[i].z, duration: 1.2, ease: "power4.out" }, "return");
             });
@@ -528,7 +500,7 @@
             } catch(err) { btn.innerHTML = originalText; btn.disabled = false; }
         });
 
-        // --- DATA & FILTER LOGIC ---
+        // --- DATA & FILTER ---
         let STASH_DATA = [];
         let currentFilter = 'All';
         let activeImageIdx = 0;
@@ -591,7 +563,6 @@
             lucide.createIcons();
         }
 
-        // Modal Functions
         function openModal(id) {
             const stash = STASH_DATA.find(s => s.id === id); if(!stash) return;
             const modal = document.getElementById('modal'); const slider = document.getElementById('modal-slider');
@@ -603,8 +574,6 @@
             slider.style.transform = `translateX(0)`;
             slider.innerHTML = imagesArray.map(img => `<div class="slide-item w-full flex-shrink-0 flex items-center justify-center bg-black h-full cursor-zoom-in" onclick="openLightbox('${img}')"><img src="${img}" class="w-full h-full object-contain"></div>`).join('');
             document.getElementById('gallery-nav').style.display = totalImagesCount > 1 ? 'flex' : 'none';
-            
-            // GSAP ile Modal Açılışı
             gsap.to(modal, { autoAlpha: 1, duration: 0.3 }); 
             gsap.fromTo(".modal-content", { y: 50, scale: 0.95, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.2)" });
             lucide.createIcons();
@@ -622,11 +591,8 @@
         window.addEventListener('load', () => {
             initThree();
             loadStashes();
-            
-            // PRELOADER BAŞLAT (HERO YERİNE)
             runPreloader();
 
-            // Filter Highlight
             const activeBtn = document.querySelector('.filter-btn.active');
             const highlight = document.getElementById('filter-highlight');
             if(activeBtn && highlight) {
@@ -634,7 +600,6 @@
                 highlight.style.width = `${activeBtn.offsetWidth}px`;
             }
 
-            // Event Listeners
             document.getElementById('btn-sell-stash').addEventListener('click', openSellMode);
             document.getElementById('btn-close-sell').addEventListener('click', closeSellMode);
         });
