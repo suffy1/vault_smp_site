@@ -11,55 +11,80 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
+        /* TEMEL AYARLAR */
         ::-webkit-scrollbar { display: none; }
         html { scrollbar-width: none; }
-
         body {
             font-family: 'Outfit', sans-serif;
             background-color: #050505;
             color: #ffffff;
             overflow-x: hidden;
             margin: 0;
-            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased; /* Fontları pürüzsüzleştir */
         }
 
-        /* THREE.JS CANVAS */
+        /* KATMAN 0: CANVAS (EN ALT - TIKLANAMAZ) */
         #bg-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            z-index: -1; /* EN ARKADA */
+            z-index: 0;
             opacity: 0.4;
-            pointer-events: none; /* Mouse'u kesinlikle yutmaz */
+            pointer-events: none !important; /* Mouse bunu görmezden gelir */
         }
 
+        /* KATMAN 1: ANA İÇERİK */
+        #main-content {
+            position: relative;
+            z-index: 10;
+            will-change: transform, opacity, filter; /* Tarayıcıya ipucu ver */
+        }
+
+        /* KATMAN 2: NAV (SABİT - YÜKSEK ÖNCELİK) */
+        nav {
+            z-index: 50;
+            transform: translateZ(0); /* GPU Hızlandırma - Tıklama gecikmesini önler */
+        }
+
+        /* KATMAN 3: OVERLAYS (MODAL & SELL FORM) */
+        .modal-overlay, #sell-overlay {
+            z-index: 100;
+            /* JS ile kontrol edilecek, başlangıçta gizli */
+            visibility: hidden; 
+            opacity: 0;
+        }
+
+        /* CAM EFEKTLERİ */
         .glass {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-
-        /* SELL FORM OVERLAY */
-        #sell-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 100;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.4);
-        }
-
         .sell-glass {
-            background: rgba(10, 10, 10, 0.9);
+            background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 100px rgba(0,0,0,0.8);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
+        /* İNTERAKTİF ELEMANLAR */
+        .stash-card {
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+            pointer-events: auto; /* Tıklamayı zorla */
+        }
+        .stash-card:hover { border-color: rgba(255, 255, 255, 0.3); }
+
+        button, a {
+            cursor: pointer;
+            pointer-events: auto; /* Tıklamayı zorla */
+        }
+
+        /* FORM INPUTLARI */
         input, textarea {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -70,6 +95,7 @@
             outline: none;
             transition: all 0.3s;
             font-family: 'Outfit', sans-serif;
+            pointer-events: auto;
         }
         input:focus, textarea:focus {
             border-color: #10b981; 
@@ -86,11 +112,7 @@
             font-weight: 700;
         }
 
-        .stash-card { transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; }
-        .stash-card:hover { border-color: rgba(255, 255, 255, 0.3); }
-        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(25px); opacity: 0; }
         .filter-btn.active { color: black; transition: color 0.3s ease; }
-        #modal-slider { display: flex; height: 100%; width: 100%; transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
         .seller-badge-official { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
         .seller-badge-user { color: #34d399; }
     </style>
@@ -99,26 +121,25 @@
 
     <canvas id="bg-canvas"></canvas>
 
-    <nav id="main-nav" class="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
-        <div class="flex items-center space-x-2">
+    <nav class="fixed top-0 w-full px-8 py-6 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
+        <div class="flex items-center space-x-2 pointer-events-auto">
             <div class="w-8 h-8 bg-white rounded-sm rotate-45 flex items-center justify-center">
                 <i data-lucide="box" class="text-black w-4 h-4 -rotate-45"></i>
             </div>
             <span class="text-xl font-bold tracking-tighter uppercase">Vault.smp</span>
         </div>
-        <div class="flex items-center space-x-8 text-xs font-semibold uppercase tracking-widest opacity-60">
-            <button id="btn-sell-stash" class="text-emerald-400 hover:text-emerald-300 transition font-bold tracking-widest cursor-pointer relative z-50">SELL STASH</button>
-            <a href="#how-it-works" onclick="smoothScroll(event, '#how-it-works')" class="hover:opacity-100 transition cursor-pointer">How it Works?</a>
-            <a href="#showroom" onclick="smoothScroll(event, '#showroom')" class="hover:opacity-100 transition cursor-pointer">Catalogue</a>
-            <a href="https://discord.gg/yourlink" target="_blank" class="bg-white text-black px-6 py-2 rounded-full hover:scale-105 transition duration-300 cursor-pointer">Contact Admin</a>
+        <div class="flex items-center space-x-8 text-xs font-semibold uppercase tracking-widest opacity-80 pointer-events-auto">
+            <button id="btn-sell-stash" class="text-emerald-400 hover:text-emerald-300 transition font-bold tracking-widest hover:scale-105 transform">SELL STASH</button>
+            <a href="#how-it-works" onclick="smoothScroll(event, '#how-it-works')" class="hover:opacity-100 hover:text-white transition">How it Works?</a>
+            <a href="#showroom" onclick="smoothScroll(event, '#showroom')" class="hover:opacity-100 hover:text-white transition">Catalogue</a>
+            <a href="https://discord.gg/yourlink" target="_blank" class="bg-white text-black px-6 py-2 rounded-full hover:scale-105 transition duration-300 shadow-lg shadow-white/10">Contact Admin</a>
         </div>
     </nav>
 
-    <div id="main-content" class="origin-center">
+    <div id="main-content">
         
-        <section class="min-h-screen flex flex-col justify-center items-center px-6 pt-20 relative z-10">
-            <div class="max-w-4xl text-center">
-                <p id="hero-sub" class="text-xs font-bold uppercase tracking-[0.4em] mb-4 opacity-0 translate-y-4">Private Inventory</p>
+        <section class="min-h-screen flex flex-col justify-center items-center px-6 pt-20">
+            <div class="max-w-4xl text-center z-10 pointer-events-none"> <p id="hero-sub" class="text-xs font-bold uppercase tracking-[0.4em] mb-4 opacity-0 translate-y-4">Private Inventory</p>
                 <h1 id="hero-title" class="text-6xl md:text-8xl font-bold mb-8 leading-tight tracking-tighter opacity-0">
                     THE ELITE <br> <span class="italic font-light text-white/50">STASH SHOWROOM</span>
                 </h1>
@@ -127,31 +148,33 @@
                     Curated collection of high-security coordinates and assets on Donut SMP. 
                     Everything from subterranean bunkers to void-level skybases.
                 </p>
-                <div id="scroll-arrow" class="mt-16 opacity-0 translate-y-4 flex justify-center">
-                    <button onclick="smoothScroll(event, '#showroom')" class="text-white/30 hover:text-white transition-colors duration-300 animate-bounce">
-                        <i data-lucide="chevrons-down" class="w-10 h-10"></i>
-                    </button>
-                </div>
+            </div>
+            <div id="scroll-arrow" class="mt-16 opacity-0 translate-y-4 flex justify-center pointer-events-auto">
+                <button onclick="smoothScroll(event, '#showroom')" class="text-white/30 hover:text-white transition-colors duration-300 animate-bounce">
+                    <i data-lucide="chevrons-down" class="w-10 h-10"></i>
+                </button>
             </div>
         </section>
 
-        <section id="showroom" class="max-w-7xl mx-auto px-8 pb-20 pt-20 relative z-10">
+        <section id="showroom" class="max-w-7xl mx-auto px-8 pb-20 pt-20">
             <div class="flex flex-col md:flex-row justify-between items-center mb-20 gap-8">
                 <h2 class="text-sm font-bold uppercase tracking-widest opacity-40 whitespace-nowrap">Active Listings</h2>
                 <div class="h-px bg-white/10 flex-grow hidden md:block"></div>
+                
                 <div class="relative flex bg-white/5 p-1 rounded-full border border-white/10" id="filter-wrapper">
-                    <div id="filter-highlight" class="absolute bg-white rounded-full transition-all duration-300 ease-in-out z-0" style="top: 4px; bottom: 4px; left: 4px; width: 0;"></div>
-                    <button onclick="filterItems('All', this)" class="filter-btn active relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition">All</button>
-                    <button onclick="filterItems('Available', this)" class="filter-btn relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition">Available</button>
-                    <button onclick="filterItems('Sold', this)" class="filter-btn relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition">Sold</button>
+                    <div id="filter-highlight" class="absolute bg-white rounded-full transition-all duration-300 ease-in-out z-0 pointer-events-none" style="top: 4px; bottom: 4px; left: 4px; width: 0;"></div>
+                    <button onclick="filterItems('All', this)" class="filter-btn active relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition pointer-events-auto">All</button>
+                    <button onclick="filterItems('Available', this)" class="filter-btn relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition pointer-events-auto">Available</button>
+                    <button onclick="filterItems('Sold', this)" class="filter-btn relative z-10 text-[10px] uppercase font-bold px-8 py-2.5 rounded-full transition pointer-events-auto">Sold</button>
                 </div>
             </div>
-            <div id="stash-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                 <p class="text-white/30 text-center col-span-full">Loading catalogue...</p>
+
+            <div id="stash-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 min-h-[300px]">
+                 <p class="text-white/30 text-center col-span-full pt-10">Loading catalogue...</p>
             </div>
         </section>
 
-        <section id="how-it-works" class="max-w-7xl mx-auto px-8 pb-40 relative z-10">
+        <section id="how-it-works" class="max-w-7xl mx-auto px-8 pb-40">
             <div class="h-px bg-white/10 w-full mb-20"></div>
             <div class="text-center mb-16">
                 <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-500 mb-4 block">Secure Protocol</span>
@@ -184,12 +207,12 @@
         </section>
     </div>
 
-    <div id="sell-overlay">
-        <button id="btn-close-sell" class="absolute top-10 right-10 z-50 text-white/30 hover:text-white transition transform hover:rotate-90 duration-300">
+    <div id="sell-overlay" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <button id="btn-close-sell" class="absolute top-10 right-10 z-50 text-white/30 hover:text-white transition transform hover:rotate-90 duration-300 p-2">
             <i data-lucide="x" class="w-10 h-10"></i>
         </button>
 
-        <div id="sell-form-card" class="sell-glass w-full max-w-[550px] p-8 rounded-3xl relative opacity-0 translate-y-20 scale-95 overflow-hidden mx-4">
+        <div id="sell-form-card" class="sell-glass w-full max-w-[550px] p-8 rounded-3xl relative overflow-hidden mx-4 opacity-0 translate-y-20 scale-95">
              <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
              <div class="mb-6 text-center">
@@ -237,9 +260,9 @@
         </div>
     </div>
 
-    <div id="modal" class="modal-overlay flex items-center justify-center p-4 md:p-10">
+    <div id="modal" class="modal-overlay flex items-center justify-center p-4 md:p-10 fixed inset-0">
         <div class="modal-content bg-zinc-950 w-full max-w-5xl rounded-[2rem] overflow-hidden glass flex flex-col md:flex-row relative shadow-2xl shadow-black/50">
-            <button onclick="closeModal()" class="absolute top-4 right-4 z-[130] bg-white/10 text-white p-2 rounded-full hover:bg-white hover:text-black transition backdrop-blur-md"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button onclick="closeModal()" class="absolute top-4 right-4 z-[130] bg-white/10 text-white p-2 rounded-full hover:bg-white hover:text-black transition backdrop-blur-md pointer-events-auto"><i data-lucide="x" class="w-5 h-5"></i></button>
             <div class="w-full md:w-[65%] bg-black relative group flex flex-col justify-center overflow-hidden">
                 <div id="modal-slider" class="flex h-[400px] md:h-[500px] transition-transform duration-500 ease-out"></div>
                 <div id="gallery-nav" class="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -328,17 +351,17 @@
             isSellModeActive = true;
             const tl = gsap.timeline();
             
-            // YAZILAR ÇOK HIZLI kaybolsun (0.2s)
+            // 1. Yazılar ÇOK HIZLI kaybolsun (0.2s)
+            // autoAlpha ile hem opacity hem visibility kontrol edilir
             tl.to("#main-content", { 
                 duration: 0.2, 
-                opacity: 0, 
+                autoAlpha: 0, 
                 scale: 0.95, 
                 filter: "blur(10px)", 
-                pointerEvents: "none", 
                 ease: "power2.in" 
             }, "start");
 
-            // Küpler Patlasın (0.8s)
+            // 2. Küpler Patlasın (0.8s)
             cubes.forEach((cube, i) => {
                 const pushDirX = initialPositions[i].x > 0 ? 1 : -1;
                 const pushDirY = initialPositions[i].y > 0 ? 1 : -1;
@@ -348,25 +371,25 @@
                 tl.to(cube.rotation, { z: "+=2", duration: 0.8, ease: "power1.out" }, "start");
             });
 
-            // Form Gelsin
-            const overlay = document.getElementById('sell-overlay');
-            overlay.style.display = 'flex';
+            // 3. Form Gelsin (autoAlpha kullanıldı)
+            gsap.set("#sell-overlay", { autoAlpha: 1 }); // Görünür yap ama opaklık animasyonu için ayarla
             gsap.fromTo("#sell-form-card", { opacity: 0, y: 50, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, delay: 0.2, ease: "expo.out" });
         }
 
         function closeSellMode() {
-            gsap.to("#sell-form-card", { opacity: 0, y: 50, duration: 0.4, ease: "power2.in", onComplete: () => { document.getElementById('sell-overlay').style.display = 'none'; } });
+            gsap.to("#sell-form-card", { opacity: 0, y: 50, duration: 0.4, ease: "power2.in", onComplete: () => { 
+                gsap.set("#sell-overlay", { autoAlpha: 0 }); // Tamamen gizle
+            }});
             
             const tl = gsap.timeline({ onComplete: () => { isSellModeActive = false; } });
             
-            // YAZILARIN GERİ GELİŞİ & BUZLU CAM DÜZELTMESİ (clearProps: "filter")
+            // YAZILARIN GERİ GELİŞİ & BUZLU CAM DÜZELTMESİ (clearProps)
             tl.to("#main-content", { 
                 duration: 0.8, 
-                opacity: 1, 
+                autoAlpha: 1, 
                 scale: 1, 
                 filter: "blur(0px)", 
                 clearProps: "filter", 
-                pointerEvents: "auto", 
                 ease: "power2.out" 
             }, "return");
 
@@ -418,7 +441,7 @@
                 renderStashes();
             } catch (error) {
                 console.error("Error:", error);
-                document.getElementById('stash-grid').innerHTML = '<p class="text-white/30 text-center col-span-full">Database connection lost...</p>';
+                document.getElementById('stash-grid').innerHTML = '<p class="text-white/30 text-center col-span-full pt-10">Database connection lost...</p>';
             }
         }
 
@@ -446,7 +469,7 @@
             if (!STASH_DATA.length) return;
             const approvedStashes = STASH_DATA.filter(s => s.status !== 'Pending');
             const filtered = approvedStashes.filter(s => currentFilter === 'All' || s.status === currentFilter);
-            if (filtered.length === 0) { grid.innerHTML = '<p class="text-white/30 text-center col-span-full">No listings found.</p>'; return; }
+            if (filtered.length === 0) { grid.innerHTML = '<p class="text-white/30 text-center col-span-full pt-10">No listings found.</p>'; return; }
             grid.innerHTML = filtered.map(stash => {
                 let sellerBadge = stash.seller === 'VaultSMP' ? 
                     `<div class="flex items-center gap-1.5 seller-badge-official mb-1"><div class="relative flex items-center justify-center w-3.5 h-3.5"><i data-lucide="badge-check" class="absolute w-3.5 h-3.5 text-zinc-900 fill-blue-500"></i></div><span class="text-[9px] font-bold uppercase tracking-widest text-amber-400">Seller: VaultSMP</span></div>` :
@@ -479,15 +502,21 @@
             slider.style.transform = `translateX(0)`;
             slider.innerHTML = imagesArray.map(img => `<div class="slide-item w-full flex-shrink-0 flex items-center justify-center bg-black h-full cursor-zoom-in" onclick="openLightbox('${img}')"><img src="${img}" class="w-full h-full object-contain"></div>`).join('');
             document.getElementById('gallery-nav').style.display = totalImagesCount > 1 ? 'flex' : 'none';
-            modal.style.display = 'flex'; gsap.fromTo(modal, { opacity: 0 }, { opacity: 1, duration: 0.3 }); gsap.fromTo(".modal-content", { y: 50, scale: 0.95, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.2)" });
+            // Use autoAlpha for visibility toggle
+            gsap.to(modal, { autoAlpha: 1, duration: 0.3 }); 
+            gsap.fromTo(".modal-content", { y: 50, scale: 0.95, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.2)" });
             lucide.createIcons();
         }
         function changeImage(dir) { activeImageIdx += dir; if (activeImageIdx < 0) activeImageIdx = totalImagesCount - 1; if (activeImageIdx >= totalImagesCount) activeImageIdx = 0; document.getElementById('modal-slider').style.transform = `translateX(-${activeImageIdx * 100}%)`; document.getElementById('current-img-idx').innerText = activeImageIdx + 1; }
-        function closeModal() { const modal = document.getElementById('modal'); gsap.to(".modal-content", { y: 40, scale: 0.9, opacity: 0, duration: 0.3, ease: "power2.in" }); gsap.to(modal, { opacity: 0, duration: 0.3, onComplete: () => { modal.style.display = 'none'; } }); }
+        function closeModal() { 
+            const modal = document.getElementById('modal'); 
+            gsap.to(".modal-content", { y: 40, scale: 0.9, opacity: 0, duration: 0.3, ease: "power2.in" }); 
+            gsap.to(modal, { autoAlpha: 0, duration: 0.3 }); 
+        }
         function openLightbox(src) { const lb = document.getElementById('lightbox'); const lbImg = document.getElementById('lightbox-img'); lbImg.src = src; lb.classList.remove('hidden'); lb.classList.add('flex'); gsap.fromTo(lb, { opacity: 0 }, { opacity: 1, duration: 0.3 }); gsap.fromTo(lbImg, { scale: 0.8 }, { scale: 1, duration: 0.4, ease: "power2.out" }); }
         function closeLightbox() { const lb = document.getElementById('lightbox'); gsap.to(lb, { opacity: 0, duration: 0.2, onComplete: () => { lb.classList.add('hidden'); lb.classList.remove('flex'); }}); }
 
-        // --- INIT & FIRST CLICK FIX ---
+        // --- INIT & EVENT LISTENERS ---
         window.addEventListener('load', () => {
             initThree();
             loadStashes();
@@ -500,37 +529,18 @@
                 .to("#hero-desc", { opacity: 1, y: 0, duration: 1 }, "-=0.6")
                 .to("#scroll-arrow", { opacity: 1, y: 0, duration: 1 }, "-=0.6");
 
-            // Filter Highlight Fix
+            // Filter Highlight
             const activeBtn = document.querySelector('.filter-btn.active');
             const highlight = document.getElementById('filter-highlight');
             if(activeBtn && highlight) {
                 highlight.style.left = `${activeBtn.offsetLeft}px`;
                 highlight.style.width = `${activeBtn.offsetWidth}px`;
             }
+
+            // Event Listeners (Safe)
+            document.getElementById('btn-sell-stash').addEventListener('click', openSellMode);
+            document.getElementById('btn-close-sell').addEventListener('click', closeSellMode);
         });
-
-        // --- GHOST CLICK FIX ---
-        // Bu kod, sayfa yüklendiğinde tarayıcının odaklanma sorununu aşmak için
-        // görünmez bir "tam ekran" katmanı oluşturur ve ilk tıklamayı doğru hedefe yönlendirir.
-        const fixer = document.createElement('div');
-        fixer.style.position = 'fixed';
-        fixer.style.inset = '0';
-        fixer.style.zIndex = '99999';
-        fixer.style.cursor = 'default';
-        document.body.appendChild(fixer);
-
-        fixer.addEventListener('click', (e) => {
-            fixer.remove(); // Katmanı yok et
-            const target = document.elementFromPoint(e.clientX, e.clientY);
-            if (target) {
-                target.click(); // Altındaki asıl elemana tıkla
-                target.focus();
-            }
-        });
-
-        // Event Listeners
-        document.getElementById('btn-sell-stash').addEventListener('click', openSellMode);
-        document.getElementById('btn-close-sell').addEventListener('click', closeSellMode);
 
         window.addEventListener('click', (e) => {
             if (e.target == document.getElementById('modal')) closeModal(); 
@@ -539,4 +549,3 @@
     </script>
 </body>
 </html>
-
