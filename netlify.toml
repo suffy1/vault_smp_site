@@ -16,7 +16,13 @@
   to = "/.netlify/functions/admin-get"
   status = 200
 
+# Eski admin-update'i silebilirsin, yerine admin-edit geldi
 [[redirects]]
-  from = "/api/admin-update"
-  to = "/.netlify/functions/admin-update"
+  from = "/api/admin-edit"
+  to = "/.netlify/functions/admin-edit"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin-add-official"
+  to = "/.netlify/functions/admin-add-official"
   status = 200
