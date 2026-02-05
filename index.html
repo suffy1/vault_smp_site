@@ -269,8 +269,7 @@
 
         async function loadStashes() {
             try {
-                // VERİTABANINDAN ÇEKME (API)
-                const response = await fetch('/api/stashes');
+                const response = await fetch('/api/stashes'); // Veritabanından çek
                 if (!response.ok) throw new Error("Veritabanı hatası");
                 STASH_DATA = await response.json();
                 renderStashes();
@@ -279,7 +278,7 @@
                 document.getElementById('stash-grid').innerHTML = `
                     <div class="col-span-full text-center p-10 bg-red-500/10 rounded-2xl border border-red-500/20">
                         <p class="text-red-400 font-bold mb-2">Veri Yüklenemedi</p>
-                        <p class="text-xs text-red-300/60">Veritabanı bağlantısı bekleniyor...</p>
+                        <p class="text-xs text-red-300/60">Lütfen veritabanı kurulumunu tamamladığından emin ol.</p>
                     </div>`;
             }
         }
@@ -340,8 +339,10 @@
                     `;
                 }
 
-                // Resim dizisi kontrolü (Eski veri string ise diziye çevir)
+                // Resim Hatası Önleyici: String gelirse dizi yap
                 let mainImage = Array.isArray(stash.images) ? stash.images[0] : stash.images;
+                // Veri yoksa placeholder koy
+                if(!mainImage) mainImage = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2000';
 
                 return `
                 <div class="stash-card glass rounded-[2rem] p-4 group" onclick="openModal(${stash.id})">
@@ -527,3 +528,4 @@
     </script>
 </body>
 </html>
+
