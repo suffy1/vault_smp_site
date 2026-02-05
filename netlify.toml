@@ -1,3 +1,7 @@
-[[edge_functions]]
-  path = "/api/stashes"
-  function = "get_stashes"
+[build]
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/stashes"
+  to = "/.netlify/functions/get_stashes"
+  status = 200
