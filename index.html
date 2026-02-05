@@ -105,10 +105,10 @@
             <span class="text-xl font-bold tracking-tighter uppercase">Vault.smp</span>
         </div>
         <div class="flex items-center space-x-8 text-xs font-semibold uppercase tracking-widest opacity-60">
-            <button onclick="openSellMode()" class="text-emerald-400 hover:text-emerald-300 transition font-bold tracking-widest">SELL STASH</button>
-            <a href="#how-it-works" onclick="smoothScroll(event, '#how-it-works')" class="hover:opacity-100 transition">How it Works?</a>
-            <a href="#showroom" onclick="smoothScroll(event, '#showroom')" class="hover:opacity-100 transition">Catalogue</a>
-            <a href="https://discord.gg/yourlink" target="_blank" class="bg-white text-black px-6 py-2 rounded-full hover:scale-105 transition duration-300">Contact Admin</a>
+            <button onclick="openSellMode()" class="text-emerald-400 hover:text-emerald-300 transition font-bold tracking-widest cursor-pointer relative z-50">SELL STASH</button>
+            <a href="#how-it-works" onclick="smoothScroll(event, '#how-it-works')" class="hover:opacity-100 transition cursor-pointer">How it Works?</a>
+            <a href="#showroom" onclick="smoothScroll(event, '#showroom')" class="hover:opacity-100 transition cursor-pointer">Catalogue</a>
+            <a href="https://discord.gg/yourlink" target="_blank" class="bg-white text-black px-6 py-2 rounded-full hover:scale-105 transition duration-300 cursor-pointer">Contact Admin</a>
         </div>
     </nav>
 
@@ -266,6 +266,49 @@
     <div id="lightbox" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl hidden flex-col items-center justify-center p-4 cursor-zoom-out" onclick="closeLightbox()"><button class="absolute top-6 right-6 text-white/50 hover:text-white transition"><i data-lucide="x" class="w-8 h-8"></i></button><img id="lightbox-img" src="" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl shadow-emerald-500/10 scale-95 transition-transform duration-300"><p class="text-white/30 text-xs mt-4 uppercase tracking-widest">Click anywhere to close</p></div>
 
     <script>
+        // --- AUDIO UX (GÜVENLİ MOD) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.15;
+        masterGain.connect(audioCtx.destination);
+
+        // KİLİT AÇICI: Kullanıcının sayfadaki HERHANGİ bir ilk tıklamasını yakalar
+        document.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }, { once: true }); // Sadece bir kere çalışır
+
+        function playHoverSound() {
+            if (audioCtx.state !== 'running') return; // Hazır değilse çalma (Hata verme)
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playClickSound() {
+            if (audioCtx.state !== 'running') return; // Hazır değilse çalma
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
         // --- THREE.JS LOGIC ---
         let cubes = [];
         let initialPositions = [];
@@ -473,15 +516,26 @@
                 .to("#hero-desc", { opacity: 1, y: 0, duration: 1 }, "-=0.6")
                 .to("#scroll-arrow", { opacity: 1, y: 0, duration: 1 }, "-=0.6");
 
-            // --- FILTER HIGHLIGHT INITIALIZATION FIX ---
-            // Bu kısım "ALL" butonunun arkasındaki beyaz kutunun sayfa açılır açılmaz doğru yere gelmesini sağlar
+            // Filter Highlight Fix
             const activeBtn = document.querySelector('.filter-btn.active');
             const highlight = document.getElementById('filter-highlight');
             if(activeBtn && highlight) {
-                // Konumu ve genişliği hemen ayarla
                 highlight.style.left = `${activeBtn.offsetLeft}px`;
                 highlight.style.width = `${activeBtn.offsetWidth}px`;
             }
+
+            // --- ATTACH SOUNDS SAFELY ---
+            document.body.addEventListener('mouseenter', (e) => {
+                if(e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('.stash-card')) {
+                    playHoverSound();
+                }
+            }, true);
+
+            document.body.addEventListener('mousedown', (e) => {
+                if(e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('.stash-card')) {
+                    playClickSound();
+                }
+            }, true);
         };
 
         window.onclick = (e) => { 
@@ -491,5 +545,3 @@
     </script>
 </body>
 </html>
-
-
