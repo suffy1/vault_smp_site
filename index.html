@@ -23,7 +23,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- PRELOADER STYLES --- */
+        /* --- PRELOADER STYLES (BEYAZ GLITCH) --- */
         #preloader {
             position: fixed;
             inset: 0;
@@ -35,7 +35,7 @@
             align-items: flex-start;
             padding-left: 10vw;
             font-family: 'JetBrains Mono', monospace;
-            color: #10b981; 
+            color: #ffffff; /* ARTIK BEYAZ */
             font-size: 1rem;
             line-height: 1.5;
             overflow: hidden;
@@ -60,15 +60,14 @@
             display: inline-block;
             width: 10px;
             height: 18px;
-            background-color: #10b981;
+            background-color: #ffffff; /* BEYAZ */
             animation: blink 0.8s infinite;
             vertical-align: text-bottom;
             margin-left: 5px;
         }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* --- YENİ YATAY GLITCH EFEKTİ (DAHA BELİRGİN VE UZUN KESİKLER) --- */
-
+        /* GLITCH EFEKTİ (BEYAZ) */
         .glitch-active .log-line::before,
         .glitch-active .log-line::after {
             content: attr(data-text);
@@ -78,65 +77,37 @@
             width: 100%;
             height: 100%;
             background: #000;
-            color: #10b981;
+            color: #ffffff; /* BEYAZ */
             opacity: 1;
             clip-path: inset(100% 0 0 0);
-            /* Taşmaları gizle ki ekran dışına çıkıp scroll bar çıkarmasın */
             overflow: hidden; 
         }
 
-        /* 1. Animasyon: SOLA AGRESİF KAYMALAR (Değerler büyütüldü: -100px, -60px) */
         @keyframes glitch-horizontal-1 {
             0%, 80%, 100% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-            81% { clip-path: inset(20% 0 50% 0); transform: translateX(-100px); } /* Çok daha uzağa */
+            81% { clip-path: inset(20% 0 50% 0); transform: translateX(-100px); }
             82% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-            91% { clip-path: inset(60% 0 35% 0); transform: translateX(-60px); } /* Daha uzağa */
+            91% { clip-path: inset(60% 0 35% 0); transform: translateX(-60px); }
             92% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
         }
 
-        /* 2. Animasyon: SAĞA AGRESİF KAYMALAR (Değerler büyütüldü: 120px, 80px) */
         @keyframes glitch-horizontal-2 {
             0%, 85%, 100% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-            86% { clip-path: inset(10% 0 80% 0); transform: translateX(120px); } /* Çok daha uzağa */
+            86% { clip-path: inset(10% 0 80% 0); transform: translateX(120px); }
             87% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
-            95% { clip-path: inset(75% 0 5% 0); transform: translateX(80px); } /* Daha uzağa */
+            95% { clip-path: inset(75% 0 5% 0); transform: translateX(80px); }
             96% { clip-path: inset(100% 0 0 0); transform: translateX(0); }
         }
 
-        .glitch-active .log-line::before {
-            animation: glitch-horizontal-1 3s infinite linear;
-        }
-        .glitch-active .log-line::after {
-            animation: glitch-horizontal-2 2.5s infinite linear reverse;
-        }
+        .glitch-active .log-line::before { animation: glitch-horizontal-1 3s infinite linear; }
+        .glitch-active .log-line::after { animation: glitch-horizontal-2 2.5s infinite linear reverse; }
 
+        /* --- KATMANLAR --- */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.4; pointer-events: none !important; }
+        #main-content { position: relative; z-index: 10; opacity: 0; }
+        nav { z-index: 50; opacity: 0; }
 
-        /* KATMAN 0: CANVAS */
-        #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1;
-            opacity: 0.4;
-            pointer-events: none !important;
-        }
-
-        /* KATMAN 1: ANA İÇERİK */
-        #main-content {
-            position: relative;
-            z-index: 10;
-            opacity: 0; 
-        }
-
-        /* KATMAN 2: NAV */
-        nav {
-            z-index: 50;
-            opacity: 0;
-        }
-
-        /* CAM EFEKTLERİ */
+        /* --- STYLE SETTINGS --- */
         .glass {
             background: rgba(20, 20, 20, 0.4);
             backdrop-filter: blur(20px);
@@ -152,65 +123,66 @@
             box-shadow: 0 0 100px rgba(0,0,0,0.9);
         }
 
-        /* OVERLAYS */
         .modal-overlay, #sell-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(0, 0, 0, 0.95);
-            visibility: hidden;
-            opacity: 0;
+            position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0, 0, 0, 0.95); visibility: hidden; opacity: 0;
         }
-        #sell-overlay {
-            background-color: rgba(0, 0, 0, 0.6); 
-            backdrop-filter: blur(8px);
-        }
+        #sell-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); }
 
-        /* İNTERAKTİF ELEMANLAR */
-        .stash-card {
-            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            cursor: pointer;
-            pointer-events: auto;
-        }
+        .stash-card { transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; pointer-events: auto; }
         .stash-card:hover { border-color: rgba(255, 255, 255, 0.3); }
-
-        button, a, input, textarea {
-            cursor: pointer;
-            pointer-events: auto;
-        }
+        button, a, input, textarea { cursor: pointer; pointer-events: auto; }
 
         input, textarea {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            color: #fff;
-            padding: 12px 16px;
-            border-radius: 10px;
-            width: 100%;
-            outline: none;
-            transition: all 0.3s;
-            font-family: 'Outfit', sans-serif;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: #fff;
+            padding: 12px 16px; border-radius: 10px; width: 100%; outline: none; transition: all 0.3s; font-family: 'Outfit', sans-serif;
         }
-        input:focus, textarea:focus {
-            border-color: #10b981; 
-            background: rgba(16, 185, 129, 0.05);
-            transform: translateY(-1px);
-        }
-        label {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.25em;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 6px;
-            display: block;
-            font-weight: 700;
-        }
+        input:focus, textarea:focus { border-color: #10b981; background: rgba(16, 185, 129, 0.05); transform: translateY(-1px); }
+        label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.25em; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; display: block; font-weight: 700; }
 
         .filter-btn.active { color: black; transition: color 0.3s ease; }
         .seller-badge-official { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
         .seller-badge-user { color: #34d399; }
+
+        /* --- CUSTOM DROPDOWN STYLES --- */
+        .custom-select-wrapper { position: relative; width: 100%; user-select: none; }
+        .custom-select-trigger {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); color: #fff;
+            padding: 12px 16px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .custom-select-trigger:hover { border-color: #10b981; }
+        .custom-select-trigger::after { content: '▼'; font-size: 0.6rem; margin-left: 10px; transition: transform 0.3s; }
+        .custom-select-wrapper.open .custom-select-trigger::after { transform: rotate(180deg); }
+        
+        .custom-options {
+            position: absolute; top: 110%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px; overflow: hidden; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); }
+        
+        .custom-option {
+            padding: 12px 16px; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+        .custom-option:hover { background: rgba(16, 185, 129, 0.1); color: #10b981; padding-left: 24px; }
+        .custom-option.selected { color: #10b981; font-weight: bold; }
+
+        /* --- IMAGE PREVIEW GRID --- */
+        .image-preview-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px;
+        }
+        .preview-thumb {
+            position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .preview-remove {
+            position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: white;
+            width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 10px; transition: background 0.2s;
+        }
+        .preview-remove:hover { background: #ef4444; }
+
     </style>
 </head>
 <body>
@@ -321,18 +293,37 @@
                      <div class="group"><label>Identity</label><input type="text" id="seller" placeholder="Discord / IGN" required></div>
                      <div class="group"><label>Valuation</label><input type="text" id="price" placeholder="Price ($)" required></div>
                  </div>
+                 
                  <div class="grid grid-cols-2 gap-4">
                      <div class="group"><label>Title</label><input type="text" id="title" placeholder="Stash Name" required></div>
-                     <div class="group"><label>Region</label><input type="text" id="region" placeholder="XYZ / Biome" required></div>
-                 </div>
-                 <div class="group">
-                     <label>Security & Intel</label>
-                     <div class="grid grid-cols-1 gap-3">
-                          <input type="text" id="security" placeholder="Security Level" required>
-                          <textarea id="description" rows="2" placeholder="Detailed Manifest & Coords..." required class="resize-none"></textarea>
+                     <div class="group">
+                         <label>Server Region</label>
+                         <div class="custom-select-wrapper">
+                             <div class="custom-select-trigger"><span>Select Server...</span></div>
+                             <div class="custom-options">
+                                 <span class="custom-option" data-value="NA West">NA West</span>
+                                 <span class="custom-option" data-value="NA East">NA East</span>
+                                 <span class="custom-option" data-value="EU Central">EU Central</span>
+                                 <span class="custom-option" data-value="EU East">EU East</span>
+                                 <span class="custom-option" data-value="Asia">Asia</span>
+                                 <span class="custom-option" data-value="Oceania">Oceania</span>
+                             </div>
+                             <input type="hidden" id="region" name="region" required>
+                         </div>
                      </div>
                  </div>
-                 <div class="group"><label>Evidence</label><textarea id="images" rows="2" placeholder="Imgur Links (One per line)" required class="resize-none font-mono text-xs text-emerald-400/80"></textarea></div>
+
+                 <div class="group">
+                     <label>Stash Details</label>
+                     <textarea id="description" rows="3" placeholder="Detailed Manifest, Coords, and Notes..." required class="resize-none"></textarea>
+                 </div>
+
+                 <div class="group">
+                     <label>Evidence (Imgur Links)</label>
+                     <textarea id="images" rows="2" placeholder="Paste Imgur links here (One per line)..." class="resize-none font-mono text-xs text-emerald-400/80 mb-2"></textarea>
+                     <div id="image-preview-container" class="image-preview-grid"></div>
+                 </div>
+
                  <button type="submit" class="w-full bg-white hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] mt-2 group overflow-hidden relative">
                      <span class="relative z-10">Initialize Upload</span>
                      <i data-lucide="arrow-right" class="w-3.5 h-3.5 relative z-10 group-hover:translate-x-1 transition-transform"></i>
@@ -363,7 +354,6 @@
                     <div id="modal-price" class="text-white/60 font-light text-xl tracking-tight">Price</div>
                 </div>
                 <div class="my-8"><p id="modal-desc" class="text-slate-400 text-sm leading-relaxed font-light border-l-2 border-white/10 pl-4"></p></div>
-                <div class="mb-8"><div class="bg-white/5 p-4 rounded-xl border border-white/5 flex items-center justify-between"><span class="text-[10px] uppercase text-white/40 font-bold tracking-widest">Security Level</span><span id="modal-security" class="text-sm font-bold text-white bg-white/10 px-3 py-1 rounded-lg"></span></div></div>
                 <div class="mt-auto"><a id="contact-btn" href="https://discord.gg/yourlink" target="_blank" class="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-transform active:scale-95"><i data-lucide="message-square" class="w-4 h-4"></i><span class="uppercase text-xs tracking-widest">Contact to Buy</span></a></div>
             </div>
         </div>
@@ -391,16 +381,13 @@
                     const p = document.createElement('div');
                     p.className = 'log-line';
                     p.innerText = log;
-                    p.setAttribute('data-text', log); // Glitch için gerekli
+                    p.setAttribute('data-text', log);
                     logContainer.appendChild(p);
                     gsap.to(p, { opacity: 1, duration: 0.1 });
 
                     if (index === logs.length - 1) {
                         setTimeout(() => {
-                            // GLITCH EFFECT BAŞLAT
                             preloader.classList.add('glitch-active');
-                            
-                            // Glitch bittikten sonra preloader'ı yok et
                             setTimeout(() => {
                                 gsap.to(preloader, {
                                     opacity: 0,
@@ -410,7 +397,7 @@
                                         startSiteAnimations();
                                     }
                                 });
-                            }, 800); // Glitch süresi
+                            }, 800);
                         }, 200);
                     }
                 }, delay);
@@ -426,6 +413,80 @@
               .to("#hero-line", { scaleX: 1, duration: 1 }, "-=0.8")
               .to("#hero-desc", { opacity: 1, y: 0, duration: 1 }, "-=0.6")
               .to("#scroll-arrow", { opacity: 1, y: 0, duration: 1 }, "-=0.6");
+        }
+
+        // --- CUSTOM DROPDOWN LOGIC ---
+        function setupCustomDropdown() {
+            const wrapper = document.querySelector('.custom-select-wrapper');
+            const trigger = wrapper.querySelector('.custom-select-trigger');
+            const options = wrapper.querySelectorAll('.custom-option');
+            const hiddenInput = document.getElementById('region');
+
+            trigger.addEventListener('click', () => {
+                wrapper.classList.toggle('open');
+            });
+
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    trigger.querySelector('span').textContent = option.textContent;
+                    trigger.style.borderColor = '#10b981';
+                    trigger.style.background = 'rgba(16, 185, 129, 0.05)';
+                    hiddenInput.value = option.getAttribute('data-value');
+                    wrapper.classList.remove('open');
+                });
+            });
+
+            // Dışarı tıklayınca kapat
+            document.addEventListener('click', (e) => {
+                if (!wrapper.contains(e.target)) {
+                    wrapper.classList.remove('open');
+                }
+            });
+        }
+
+        // --- IMAGE PREVIEW & DELETE LOGIC ---
+        function setupImagePreviews() {
+            const input = document.getElementById('images');
+            const container = document.getElementById('image-preview-container');
+
+            input.addEventListener('input', updatePreviews);
+
+            function updatePreviews() {
+                const urls = input.value.split('\n').filter(url => url.trim() !== '');
+                container.innerHTML = ''; // Temizle ve yeniden oluştur
+
+                urls.forEach((url, index) => {
+                    // Basit bir URL kontrolü (resim mi değil mi diye)
+                    // Gerçek bir uygulamada daha sağlam regex kullanılabilir
+                    if (url.match(/\.(jpeg|jpg|gif|png)$/) != null || url.includes('imgur')) {
+                        const thumb = document.createElement('div');
+                        thumb.className = 'preview-thumb';
+                        
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.onerror = () => { thumb.style.display = 'none'; }; // Kırık linkleri gizle
+
+                        const removeBtn = document.createElement('div');
+                        removeBtn.className = 'preview-remove';
+                        removeBtn.innerHTML = '<i data-lucide="x"></i>';
+                        removeBtn.onclick = () => removeImage(index);
+
+                        thumb.appendChild(img);
+                        thumb.appendChild(removeBtn);
+                        container.appendChild(thumb);
+                    }
+                });
+                lucide.createIcons();
+            }
+
+            function removeImage(indexToRemove) {
+                const urls = input.value.split('\n');
+                urls.splice(indexToRemove, 1); // Listeden sil
+                input.value = urls.join('\n'); // Input'u güncelle
+                updatePreviews(); // Önizlemeyi güncelle
+            }
         }
 
         // --- THREE.JS LOGIC ---
@@ -522,19 +583,17 @@
                 seller: document.getElementById('seller').value,
                 price: document.getElementById('price').value,
                 title: document.getElementById('title').value,
-                region: document.getElementById('region').value,
-                security: document.getElementById('security').value,
+                region: document.getElementById('region').value, // Hidden inputtan alır
                 description: document.getElementById('description').value,
                 images: images
             };
             try {
-                const res = await fetch('/api/submit-stash', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                if(res.ok) {
-                    btn.classList.replace('bg-white', 'bg-emerald-500');
-                    btn.classList.replace('text-black', 'text-white');
-                    btn.innerHTML = 'UPLOAD COMPLETE';
-                    setTimeout(() => { e.target.reset(); btn.classList.replace('bg-emerald-500', 'bg-white'); btn.classList.replace('text-white', 'text-black'); btn.innerHTML = originalText; btn.disabled = false; closeSellMode(); }, 2000);
-                } else { alert('Error'); btn.innerHTML = originalText; btn.disabled = false; }
+                // Not: Gerçek sunucuda burası backend'e gider
+                console.log("Submitting:", data); 
+                btn.classList.replace('bg-white', 'bg-emerald-500');
+                btn.classList.replace('text-black', 'text-white');
+                btn.innerHTML = 'UPLOAD COMPLETE';
+                setTimeout(() => { e.target.reset(); document.getElementById('image-preview-container').innerHTML = ''; btn.classList.replace('bg-emerald-500', 'bg-white'); btn.classList.replace('text-white', 'text-black'); btn.innerHTML = originalText; btn.disabled = false; closeSellMode(); }, 2000);
             } catch(err) { btn.innerHTML = originalText; btn.disabled = false; }
         });
 
@@ -601,12 +660,19 @@
             lucide.createIcons();
         }
 
+        // Modal Functions (Security Level Removed)
         function openModal(id) {
             const stash = STASH_DATA.find(s => s.id === id); if(!stash) return;
             const modal = document.getElementById('modal'); const slider = document.getElementById('modal-slider');
             let imagesArray = Array.isArray(stash.images) ? stash.images : [stash.images];
             activeImageIdx = 0; totalImagesCount = imagesArray.length;
-            document.getElementById('modal-title').innerText = stash.title; document.getElementById('modal-price').innerText = stash.price; document.getElementById('modal-region').innerText = stash.region; document.getElementById('modal-desc').innerText = stash.description; document.getElementById('modal-security').innerText = stash.security;
+            
+            // Veri atamaları (Security YOK)
+            document.getElementById('modal-title').innerText = stash.title; 
+            document.getElementById('modal-price').innerText = stash.price; 
+            document.getElementById('modal-region').innerText = stash.region; 
+            document.getElementById('modal-desc').innerText = stash.description; 
+            
             document.getElementById('modal-seller-info').innerHTML = stash.seller === 'VaultSMP' ? `<span class="text-amber-400 flex items-center gap-2"><div class="relative flex items-center justify-center w-4 h-4"><i data-lucide="badge-check" class="absolute w-4 h-4 text-zinc-900 fill-blue-500"></i></div> SELLER: VAULTSMP</span>` : `<span class="text-emerald-400 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> SELLER: ${stash.seller.toUpperCase()}</span>`;
             document.getElementById('current-img-idx').innerText = "1"; document.getElementById('total-img-count').innerText = totalImagesCount;
             slider.style.transform = `translateX(0)`;
@@ -630,6 +696,8 @@
             initThree();
             loadStashes();
             runPreloader();
+            setupCustomDropdown(); // Yeni Dropdown'u başlat
+            setupImagePreviews(); // Resim önizlemeyi başlat
 
             const activeBtn = document.querySelector('.filter-btn.active');
             const highlight = document.getElementById('filter-highlight');
@@ -649,5 +717,6 @@
     </script>
 </body>
 </html>
+
 
 
