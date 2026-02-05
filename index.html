@@ -20,7 +20,7 @@
             color: #ffffff;
             overflow-x: hidden;
             margin: 0;
-            -webkit-font-smoothing: antialiased; /* Fontları pürüzsüzleştir */
+            -webkit-font-smoothing: antialiased;
         }
 
         /* KATMAN 0: CANVAS (EN ALT - TIKLANAMAZ) */
@@ -30,58 +30,71 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            z-index: 0;
+            z-index: -1; /* EN ARKADA */
             opacity: 0.4;
-            pointer-events: none !important; /* Mouse bunu görmezden gelir */
+            pointer-events: none !important; /* Mouse'u kesinlikle yutmaz */
         }
 
         /* KATMAN 1: ANA İÇERİK */
         #main-content {
             position: relative;
             z-index: 10;
-            will-change: transform, opacity, filter; /* Tarayıcıya ipucu ver */
+            /* will-change KALDIRILDI: Glass efektini bozan kod buydu */
         }
 
-        /* KATMAN 2: NAV (SABİT - YÜKSEK ÖNCELİK) */
+        /* KATMAN 2: NAV */
         nav {
             z-index: 50;
-            transform: translateZ(0); /* GPU Hızlandırma - Tıklama gecikmesini önler */
         }
 
-        /* KATMAN 3: OVERLAYS (MODAL & SELL FORM) */
-        .modal-overlay, #sell-overlay {
-            z-index: 100;
-            /* JS ile kontrol edilecek, başlangıçta gizli */
-            visibility: hidden; 
-            opacity: 0;
-        }
-
-        /* CAM EFEKTLERİ */
+        /* CAM EFEKTLERİ (GÜÇLENDİRİLDİ) */
         .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background: rgba(20, 20, 20, 0.4); /* Biraz daha koyu taban */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
+        
         .sell-glass {
-            background: rgba(10, 10, 10, 0.95);
+            background: rgba(5, 5, 5, 0.85); /* Daha opak siyah */
             backdrop-filter: blur(40px);
             -webkit-backdrop-filter: blur(40px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 100px rgba(0,0,0,0.9);
+        }
+
+        /* OVERLAYS (MODAL & SELL FORM) */
+        /* display: flex ekledik ki açılınca düzen bozulmasın */
+        .modal-overlay, #sell-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200; /* En üstte */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.95); /* Karartma rengi garanti */
+            visibility: hidden; /* GSAP ile açılacak */
+            opacity: 0;
+        }
+        
+        /* SELL OVERLAY için özel arka plan (daha az karanlık istenirse) */
+        #sell-overlay {
+            background-color: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(8px); /* Arkadaki siteyi de biraz flulaştırır */
         }
 
         /* İNTERAKTİF ELEMANLAR */
         .stash-card {
             transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
             cursor: pointer;
-            pointer-events: auto; /* Tıklamayı zorla */
+            pointer-events: auto;
         }
         .stash-card:hover { border-color: rgba(255, 255, 255, 0.3); }
 
-        button, a {
+        button, a, input, textarea {
             cursor: pointer;
-            pointer-events: auto; /* Tıklamayı zorla */
+            pointer-events: auto;
         }
 
         /* FORM INPUTLARI */
@@ -95,7 +108,6 @@
             outline: none;
             transition: all 0.3s;
             font-family: 'Outfit', sans-serif;
-            pointer-events: auto;
         }
         input:focus, textarea:focus {
             border-color: #10b981; 
@@ -121,7 +133,7 @@
 
     <canvas id="bg-canvas"></canvas>
 
-    <nav class="fixed top-0 w-full px-8 py-6 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
+    <nav id="main-nav" class="fixed top-0 w-full px-8 py-6 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
         <div class="flex items-center space-x-2 pointer-events-auto">
             <div class="w-8 h-8 bg-white rounded-sm rotate-45 flex items-center justify-center">
                 <i data-lucide="box" class="text-black w-4 h-4 -rotate-45"></i>
@@ -139,7 +151,8 @@
     <div id="main-content">
         
         <section class="min-h-screen flex flex-col justify-center items-center px-6 pt-20">
-            <div class="max-w-4xl text-center z-10 pointer-events-none"> <p id="hero-sub" class="text-xs font-bold uppercase tracking-[0.4em] mb-4 opacity-0 translate-y-4">Private Inventory</p>
+            <div class="max-w-4xl text-center z-10 pointer-events-none">
+                <p id="hero-sub" class="text-xs font-bold uppercase tracking-[0.4em] mb-4 opacity-0 translate-y-4">Private Inventory</p>
                 <h1 id="hero-title" class="text-6xl md:text-8xl font-bold mb-8 leading-tight tracking-tighter opacity-0">
                     THE ELITE <br> <span class="italic font-light text-white/50">STASH SHOWROOM</span>
                 </h1>
@@ -207,7 +220,7 @@
         </section>
     </div>
 
-    <div id="sell-overlay" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div id="sell-overlay">
         <button id="btn-close-sell" class="absolute top-10 right-10 z-50 text-white/30 hover:text-white transition transform hover:rotate-90 duration-300 p-2">
             <i data-lucide="x" class="w-10 h-10"></i>
         </button>
@@ -260,7 +273,7 @@
         </div>
     </div>
 
-    <div id="modal" class="modal-overlay flex items-center justify-center p-4 md:p-10 fixed inset-0">
+    <div id="modal" class="modal-overlay">
         <div class="modal-content bg-zinc-950 w-full max-w-5xl rounded-[2rem] overflow-hidden glass flex flex-col md:flex-row relative shadow-2xl shadow-black/50">
             <button onclick="closeModal()" class="absolute top-4 right-4 z-[130] bg-white/10 text-white p-2 rounded-full hover:bg-white hover:text-black transition backdrop-blur-md pointer-events-auto"><i data-lucide="x" class="w-5 h-5"></i></button>
             <div class="w-full md:w-[65%] bg-black relative group flex flex-col justify-center overflow-hidden">
@@ -351,8 +364,7 @@
             isSellModeActive = true;
             const tl = gsap.timeline();
             
-            // 1. Yazılar ÇOK HIZLI kaybolsun (0.2s)
-            // autoAlpha ile hem opacity hem visibility kontrol edilir
+            // YAZILAR ÇOK HIZLI kaybolsun (0.2s)
             tl.to("#main-content", { 
                 duration: 0.2, 
                 autoAlpha: 0, 
@@ -361,7 +373,7 @@
                 ease: "power2.in" 
             }, "start");
 
-            // 2. Küpler Patlasın (0.8s)
+            // Küpler Patlasın (0.8s)
             cubes.forEach((cube, i) => {
                 const pushDirX = initialPositions[i].x > 0 ? 1 : -1;
                 const pushDirY = initialPositions[i].y > 0 ? 1 : -1;
@@ -371,25 +383,26 @@
                 tl.to(cube.rotation, { z: "+=2", duration: 0.8, ease: "power1.out" }, "start");
             });
 
-            // 3. Form Gelsin (autoAlpha kullanıldı)
-            gsap.set("#sell-overlay", { autoAlpha: 1 }); // Görünür yap ama opaklık animasyonu için ayarla
-            gsap.fromTo("#sell-form-card", { opacity: 0, y: 50, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, delay: 0.2, ease: "expo.out" });
+            // Form Gelsin
+            // autoAlpha: 1 otomatik olarak visibility: visible yapar
+            gsap.to("#sell-overlay", { autoAlpha: 1, duration: 0.1 }); 
+            gsap.fromTo("#sell-form-card", { opacity: 0, y: 50, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, delay: 0.1, ease: "expo.out" });
         }
 
         function closeSellMode() {
             gsap.to("#sell-form-card", { opacity: 0, y: 50, duration: 0.4, ease: "power2.in", onComplete: () => { 
-                gsap.set("#sell-overlay", { autoAlpha: 0 }); // Tamamen gizle
+                gsap.to("#sell-overlay", { autoAlpha: 0, duration: 0.2 }); 
             }});
             
             const tl = gsap.timeline({ onComplete: () => { isSellModeActive = false; } });
             
-            // YAZILARIN GERİ GELİŞİ & BUZLU CAM DÜZELTMESİ (clearProps)
+            // YAZILAR GERİ GELİRKEN clearProps KULLANIYORUZ
             tl.to("#main-content", { 
                 duration: 0.8, 
                 autoAlpha: 1, 
                 scale: 1, 
                 filter: "blur(0px)", 
-                clearProps: "filter", 
+                clearProps: "filter", // Blur efektini CSS'ten tamamen siler, böylece Glass efekti geri gelir
                 ease: "power2.out" 
             }, "return");
 
@@ -502,7 +515,8 @@
             slider.style.transform = `translateX(0)`;
             slider.innerHTML = imagesArray.map(img => `<div class="slide-item w-full flex-shrink-0 flex items-center justify-center bg-black h-full cursor-zoom-in" onclick="openLightbox('${img}')"><img src="${img}" class="w-full h-full object-contain"></div>`).join('');
             document.getElementById('gallery-nav').style.display = totalImagesCount > 1 ? 'flex' : 'none';
-            // Use autoAlpha for visibility toggle
+            
+            // GSAP ile Modal Açılışı - autoAlpha otomatik display toggle yapar
             gsap.to(modal, { autoAlpha: 1, duration: 0.3 }); 
             gsap.fromTo(".modal-content", { y: 50, scale: 0.95, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.2)" });
             lucide.createIcons();
@@ -537,7 +551,7 @@
                 highlight.style.width = `${activeBtn.offsetWidth}px`;
             }
 
-            // Event Listeners (Safe)
+            // Event Listeners
             document.getElementById('btn-sell-stash').addEventListener('click', openSellMode);
             document.getElementById('btn-close-sell').addEventListener('click', closeSellMode);
         });
