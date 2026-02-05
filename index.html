@@ -32,14 +32,13 @@
             height: 100vh;
             z-index: -1; /* EN ARKADA */
             opacity: 0.4;
-            pointer-events: none !important; /* Mouse'u kesinlikle yutmaz */
+            pointer-events: none !important;
         }
 
         /* KATMAN 1: ANA İÇERİK */
         #main-content {
             position: relative;
             z-index: 10;
-            /* will-change KALDIRILDI: Glass efektini bozan kod buydu */
         }
 
         /* KATMAN 2: NAV */
@@ -47,9 +46,9 @@
             z-index: 50;
         }
 
-        /* CAM EFEKTLERİ (GÜÇLENDİRİLDİ) */
+        /* CAM EFEKTLERİ */
         .glass {
-            background: rgba(20, 20, 20, 0.4); /* Biraz daha koyu taban */
+            background: rgba(20, 20, 20, 0.4);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -57,31 +56,29 @@
         }
         
         .sell-glass {
-            background: rgba(5, 5, 5, 0.85); /* Daha opak siyah */
+            background: rgba(5, 5, 5, 0.9);
             backdrop-filter: blur(40px);
             -webkit-backdrop-filter: blur(40px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 0 100px rgba(0,0,0,0.9);
         }
 
-        /* OVERLAYS (MODAL & SELL FORM) */
-        /* display: flex ekledik ki açılınca düzen bozulmasın */
+        /* OVERLAYS */
         .modal-overlay, #sell-overlay {
             position: fixed;
             inset: 0;
-            z-index: 200; /* En üstte */
+            z-index: 200;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: rgba(0, 0, 0, 0.95); /* Karartma rengi garanti */
-            visibility: hidden; /* GSAP ile açılacak */
+            background-color: rgba(0, 0, 0, 0.95);
+            visibility: hidden;
             opacity: 0;
         }
         
-        /* SELL OVERLAY için özel arka plan (daha az karanlık istenirse) */
         #sell-overlay {
             background-color: rgba(0, 0, 0, 0.6); 
-            backdrop-filter: blur(8px); /* Arkadaki siteyi de biraz flulaştırır */
+            backdrop-filter: blur(8px);
         }
 
         /* İNTERAKTİF ELEMANLAR */
@@ -97,7 +94,6 @@
             pointer-events: auto;
         }
 
-        /* FORM INPUTLARI */
         input, textarea {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -221,11 +217,12 @@
     </div>
 
     <div id="sell-overlay">
-        <button id="btn-close-sell" class="absolute top-10 right-10 z-50 text-white/30 hover:text-white transition transform hover:rotate-90 duration-300 p-2">
-            <i data-lucide="x" class="w-10 h-10"></i>
-        </button>
-
         <div id="sell-form-card" class="sell-glass w-full max-w-[550px] p-8 rounded-3xl relative overflow-hidden mx-4 opacity-0 translate-y-20 scale-95">
+             
+             <button id="btn-close-sell" class="absolute top-6 right-6 z-50 text-white/30 hover:text-white transition transform hover:rotate-90 duration-300 pointer-events-auto">
+                <i data-lucide="x" class="w-6 h-6"></i>
+             </button>
+
              <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
              <div class="mb-6 text-center">
@@ -364,7 +361,6 @@
             isSellModeActive = true;
             const tl = gsap.timeline();
             
-            // YAZILAR ÇOK HIZLI kaybolsun (0.2s)
             tl.to("#main-content", { 
                 duration: 0.2, 
                 autoAlpha: 0, 
@@ -373,7 +369,6 @@
                 ease: "power2.in" 
             }, "start");
 
-            // Küpler Patlasın (0.8s)
             cubes.forEach((cube, i) => {
                 const pushDirX = initialPositions[i].x > 0 ? 1 : -1;
                 const pushDirY = initialPositions[i].y > 0 ? 1 : -1;
@@ -383,8 +378,6 @@
                 tl.to(cube.rotation, { z: "+=2", duration: 0.8, ease: "power1.out" }, "start");
             });
 
-            // Form Gelsin
-            // autoAlpha: 1 otomatik olarak visibility: visible yapar
             gsap.to("#sell-overlay", { autoAlpha: 1, duration: 0.1 }); 
             gsap.fromTo("#sell-form-card", { opacity: 0, y: 50, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, delay: 0.1, ease: "expo.out" });
         }
@@ -396,13 +389,12 @@
             
             const tl = gsap.timeline({ onComplete: () => { isSellModeActive = false; } });
             
-            // YAZILAR GERİ GELİRKEN clearProps KULLANIYORUZ
             tl.to("#main-content", { 
                 duration: 0.8, 
                 autoAlpha: 1, 
                 scale: 1, 
                 filter: "blur(0px)", 
-                clearProps: "filter", // Blur efektini CSS'ten tamamen siler, böylece Glass efekti geri gelir
+                clearProps: "filter", 
                 ease: "power2.out" 
             }, "return");
 
@@ -516,7 +508,7 @@
             slider.innerHTML = imagesArray.map(img => `<div class="slide-item w-full flex-shrink-0 flex items-center justify-center bg-black h-full cursor-zoom-in" onclick="openLightbox('${img}')"><img src="${img}" class="w-full h-full object-contain"></div>`).join('');
             document.getElementById('gallery-nav').style.display = totalImagesCount > 1 ? 'flex' : 'none';
             
-            // GSAP ile Modal Açılışı - autoAlpha otomatik display toggle yapar
+            // GSAP ile Modal Açılışı
             gsap.to(modal, { autoAlpha: 1, duration: 0.3 }); 
             gsap.fromTo(".modal-content", { y: 50, scale: 0.95, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.2)" });
             lucide.createIcons();
